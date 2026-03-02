@@ -19,7 +19,7 @@ const Hero = () => {
                             View Demo
                         </button>
                     </div>
-                    <p className="text-sm text-gray-500 mt-6">✨ Get started free — No credit card required</p>
+                    <p className="text-sm text-gray-500 mt-6">Get started free — No credit card required</p>
                 </div>
                 <div className="relative h-[400px] md:h-[500px] flex justify-center items-center">
                     <div className="absolute bg-white border border-slate-200 rounded-3xl p-8 w-72 shadow-2xl transition-all hover:scale-105 hover:rotate-[-2deg] rotate-[-8deg] translate-x-[-40px] z-10">

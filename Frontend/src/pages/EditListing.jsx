@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const EditListing = () => {
     const { id } = useParams();
@@ -77,79 +78,86 @@ const EditListing = () => {
     };
 
     return (
-        <div>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
             <Navbar />
-            <div className="edit-listing-page">
-                <div className="edit-listing-container">
-                    <h1 className="edit-listing-title">Edit Listing</h1>
-                    
-                    <form className="edit-listing-form" onSubmit={handleSubmit}>
-                        <div className="form-group">
-                            <label className="form-label">Title</label>
-                            <input
-                                type="text"
-                                name="title"
-                                className="form-input"
-                                value={formData.title}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
+            <div className="w-full px-6 md:px-12 lg:px-20 py-16 animate-fade-in">
+                <div className="max-w-3xl mx-auto">
+                    <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-xl">
+                        <h1 className="text-4xl font-extrabold mb-8" style={{ fontFamily: 'Clash Display, sans-serif' }}>Edit Listing</h1>
+                        
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-bold mb-2 text-gray-700">Title</label>
+                                <input
+                                    type="text"
+                                    name="title"
+                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    value={formData.title}
+                                    onChange={handleChange}
+                                    placeholder="Enter product title"
+                                    required
+                                />
+                            </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Price</label>
-                            <input
-                                type="number"
-                                name="price"
-                                className="form-input"
-                                value={formData.price}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
+                            <div>
+                                <label className="block text-sm font-bold mb-2 text-gray-700">Price</label>
+                                <input
+                                    type="number"
+                                    name="price"
+                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    value={formData.price}
+                                    onChange={handleChange}
+                                    placeholder="Enter price"
+                                    required
+                                />
+                            </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Location</label>
-                            <input
-                                type="text"
-                                name="location"
-                                className="form-input"
-                                value={formData.location}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
+                            <div>
+                                <label className="block text-sm font-bold mb-2 text-gray-700">Location</label>
+                                <input
+                                    type="text"
+                                    name="location"
+                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    value={formData.location}
+                                    onChange={handleChange}
+                                    placeholder="Enter location"
+                                    required
+                                />
+                            </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Description</label>
-                            <textarea
-                                name="description"
-                                className="form-textarea"
-                                rows="5"
-                                value={formData.description}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
+                            <div>
+                                <label className="block text-sm font-bold mb-2 text-gray-700">Description</label>
+                                <textarea
+                                    name="description"
+                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-vertical"
+                                    rows="5"
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    placeholder="Enter product description"
+                                    required
+                                />
+                            </div>
 
-                        <div className="edit-listing-actions">
-                            <button
-                                type="button"
-                                className="cancel-btn"
-                                onClick={handleCancel}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                className="update-btn"
-                            >
-                                Update Listing
-                            </button>
-                        </div>
-                    </form>
+                            <div className="flex gap-4 pt-4">
+                                <button
+                                    type="button"
+                                    className="flex-1 border-2 border-slate-300 text-gray-700 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 transition-all"
+                                    onClick={handleCancel}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold px-6 py-3 rounded-xl hover:scale-105 hover:shadow-xl transition-all"
+                                >
+                                    Update Listing
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 };
