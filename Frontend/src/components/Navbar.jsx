@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Menu, X, Plus, User, LogOut, LayoutList } from 'lucide-react';
+import { Bell, Menu, X, Plus, User, LogOut, LayoutList, Flag } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import UserAvatar from './UserAvatar';
 import { getDisplayName } from '../utils/profile';
@@ -92,6 +92,9 @@ const Navbar = () => {
                                         <Link to="/my-listings" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-sm font-medium">
                                             <LayoutList size={15} />My Listings
                                         </Link>
+                                        <Link to="/dashboard/reports" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-sm font-medium">
+                                            <Flag size={15} />My Reports
+                                        </Link>
                                         <Link to="/post-ad" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-sm font-medium">
                                             <Plus size={15} />Create Link
                                         </Link>
@@ -125,6 +128,7 @@ const Navbar = () => {
                     ) : (
                         <>
                             <Link to="/my-listings" className="text-slate-700 font-medium p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors" onClick={() => setIsMenuOpen(false)}>My Listings</Link>
+                            <Link to="/dashboard/reports" className="text-slate-700 font-medium p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors" onClick={() => setIsMenuOpen(false)}>My Reports</Link>
                             <Link to="/dashboard/interests" className="text-slate-700 font-medium p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors" onClick={() => setIsMenuOpen(false)}>
                                 New Interests {sellerInterestCount > 0 ? `(${sellerInterestCount})` : ''}
                             </Link>

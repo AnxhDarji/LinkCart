@@ -147,3 +147,90 @@ exports.markAsSold = async (req, res) => {
         res.status(500).json({ error: "Failed to update product." });
     }
 };
+
+exports.toggleVisibility = async (req, res) => {
+    const productId = req.params.id;
+    const userId = req.user.custom_id;
+
+    try {
+        const checkResult = await db.query(
+            `SELECT visibility FROM products WHERE id = $1 AND user_id = $2`,
+            [productId, userId]
+        );
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({ error: "Product not found or unauthorized." });
+        }
+
+        const currentVisibility = checkResult.rows[0].visibility;
+        const newVisibility = currentVisibility === 'public' ? 'private' : 'public';
+
+        const updateResult = await db.query(
+            `UPDATE products
+             SET visibility = $1
+             WHERE id = $2 AND user_id = $3
+             RETURNING id, visibility`,
+            [newVisibility, productId, userId]
+        );
+
+        res.json({ message: `Product visibility changed to ${newVisibility}.`, product: updateResult.rows[0], newVisibility });
+    } catch (error) {
+        console.error("toggleVisibility error:", error.message);
+        res.status(500).json({ error: "Failed to update product visibility." });
+    }
+};
+
+exports.deleteProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.custom_id;
+
+        const result = await db.query(
+            "DELETE FROM products WHERE id = $1 AND user_id = $2 RETURNING *",
+            [id, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Product not found or unauthorized to delete." });
+        }
+
+        res.json({ message: "Product deleted successfully." });
+    } catch (error) {
+        console.error("deleteProduct error:", error.message);
+        res.status(500).json({ error: "Failed to delete product." });
+    }
+};
+
+exports.editProduct = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.custom_id;
+        const { title, description, price, location } = req.body;
+
+        if (!title)
+            return res.status(400).json({ error: "Title is required" });
+        if (title.length > 200)
+            return res.status(400).json({ error: "Title must be 200 characters or fewer" });
+        if (description && description.length > 5000)
+            return res.status(400).json({ error: "Description must be 5000 characters or fewer" });
+        if (location && location.length > 200)
+            return res.status(400).json({ error: "Location must be 200 characters or fewer" });
+
+        const result = await db.query(
+            `UPDATE products 
+             SET title = $1, description = $2, price = $3, location = $4 
+             WHERE id = $5 AND user_id = $6 
+             RETURNING *`,
+            [title, description, price, location, id, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Product not found or unauthorized to edit." });
+        }
+
+        res.json({ message: "Product updated successfully.", product: result.rows[0] });
+    } catch (error) {
+        console.error("editProduct error:", error.message);
+        res.status(500).json({ error: "Failed to update product." });
+    }
+};

@@ -4,16 +4,13 @@ import { Tag, MapPin, AlignLeft, ArrowRight, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
+import { useToast } from '../context/ToastContext';
+import API_BASE from '../utils/api';
+
 const inputBase = 'w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 transition-all duration-200';
 
 const RupeeIcon = ({ size = 12, className = '' }) => (
-    <span
-        aria-hidden="true"
-        className={`inline-flex items-center justify-center font-semibold leading-none ${className}`.trim()}
-        style={{ fontSize: size }}
-    >
-        ₹
-    </span>
+    <span aria-hidden="true" className={`inline-flex items-center justify-center font-semibold leading-none ${className}`.trim()} style={{ fontSize: size }}>₹</span>
 );
 
 const Label = ({ icon: Icon, children }) => (
@@ -25,37 +22,72 @@ const Label = ({ icon: Icon, children }) => (
 const EditListing = () => {
     const { id }     = useParams();
     const navigate   = useNavigate();
-
-    const mockListings = {
-        1: { title: 'Vintage Leather Jacket',  price: 299,  location: 'New York, NY',    description: 'Beautiful vintage leather jacket in excellent condition.' },
-        2: { title: 'iPhone 13 Pro',           price: 799,  location: 'Los Angeles, CA', description: 'Barely used iPhone 13 Pro with all accessories.' },
-        3: { title: 'Gaming Laptop',           price: 1299, location: 'Chicago, IL',     description: 'High-performance gaming laptop with RTX graphics.' },
-        4: { title: 'Wireless Headphones',     price: 149,  location: 'Houston, TX',     description: 'Premium wireless headphones with noise cancellation.' },
-    };
+    const toast      = useToast();
 
     const [formData, setFormData] = useState({ title: '', price: '', location: '', description: '' });
+    const [loading, setLoading]   = useState(true);
+    const [saving, setSaving]     = useState(false);
 
     useEffect(() => {
-        const saved   = JSON.parse(localStorage.getItem('myListings') || '[]');
-        const product = saved.find(p => p.id === parseInt(id));
-        if (product) {
-            setFormData({ title: product.title || '', price: product.price || '', location: product.location || '', description: product.description || '' });
-        } else if (mockListings[id]) {
-            setFormData(mockListings[id]);
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
         }
-    }, [id]);
+
+        fetch(`${API_BASE}/api/products/my`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    const product = data.find(p => String(p.id) === String(id));
+                    if (product) {
+                        setFormData({
+                            title: product.title || '',
+                            price: product.price || '',
+                            location: product.location || '',
+                            description: product.description || ''
+                        });
+                    } else {
+                        toast.error('Listing not found or you are unauthorized.');
+                        navigate('/my-listings');
+                    }
+                }
+            })
+            .catch(() => toast.error('Failed to connect to server'))
+            .finally(() => setLoading(false));
+    }, [id, navigate, toast]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const saved   = JSON.parse(localStorage.getItem('myListings') || '[]');
-        const updated = saved.map(l => l.id === parseInt(id)
-            ? { ...l, title: formData.title, price: parseFloat(formData.price), location: formData.location, description: formData.description }
-            : l
-        );
-        localStorage.setItem('myListings', JSON.stringify(updated));
-        navigate('/my-listings');
+        const token = localStorage.getItem('token');
+        setSaving(true);
+        
+        try {
+            const res = await fetch(`${API_BASE}/api/products/${id}/edit`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}` 
+                },
+                body: JSON.stringify(formData)
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                toast.success('Listing updated successfully!');
+                navigate('/my-listings');
+            } else {
+                toast.error(data.error || 'Failed to update listing.');
+            }
+        } catch(err) {
+            toast.error('Server error updating listing.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -78,7 +110,6 @@ const EditListing = () => {
 
                     <div className="bg-white/80 backdrop-blur-xl border border-white rounded-2xl p-8 shadow-[0_8px_40px_rgba(99,102,241,0.10)]">
                         <form onSubmit={handleSubmit} className="space-y-5">
-
                             <div>
                                 <Label icon={Tag}>Title</Label>
                                 <input type="text" name="title" className={inputBase} value={formData.title} onChange={handleChange} placeholder="Enter product title" required />
@@ -100,15 +131,17 @@ const EditListing = () => {
                                 <button
                                     type="button"
                                     onClick={() => navigate('/my-listings')}
-                                    className="flex-1 flex items-center justify-center gap-2 border border-slate-200 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+                                    className="flex-1 flex items-center justify-center gap-2 border border-slate-200 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 min-w-0"
                                 >
                                     <X size={15} />Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold px-6 py-3 rounded-xl hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-200 active:translate-y-0 transition-all duration-200"
+                                    disabled={loading || saving}
+                                    className="flex-[2] flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold px-6 py-3 rounded-xl hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-200 active:translate-y-0 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
-                                    <span>Update Listing</span><ArrowRight size={15} />
+                                    <span>{saving ? 'Updating...' : 'Update Listing'}</span>
+                                    {!saving && <ArrowRight size={15} />}
                                 </button>
                             </div>
                         </form>

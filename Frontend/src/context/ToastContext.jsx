@@ -31,28 +31,28 @@ export const ToastProvider = ({ children }) => {
     const getToastColors = (type) => {
         switch (type) {
             case 'success':
-                return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800';
+                return 'bg-[#10b981] text-white border-[#059669] shadow-[0_8px_30px_rgb(16,185,129,0.3)]';
             case 'error':
-                return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800';
+                return 'bg-[#ef4444] text-white border-[#b91c1c] shadow-[0_8px_30px_rgb(239,68,68,0.3)]';
             case 'warning':
-                return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800';
+                return 'bg-[#f59e0b] text-white border-[#b45309] shadow-[0_8px_30px_rgb(245,158,11,0.3)]';
             case 'info':
             default:
-                return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800';
+                return 'bg-[#3b82f6] text-white border-[#1d4ed8] shadow-[0_8px_30px_rgb(59,130,246,0.3)]';
         }
     };
 
     const getToastIcon = (type) => {
         switch (type) {
             case 'success':
-                return <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />;
+                return <CheckCircle className="w-5 h-5 text-white shrink-0 mt-0.5" />;
             case 'error':
-                return <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />;
+                return <AlertCircle className="w-5 h-5 text-white shrink-0 mt-0.5" />;
             case 'warning':
-                return <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0" />;
+                return <AlertTriangle className="w-5 h-5 text-white shrink-0 mt-0.5" />;
             case 'info':
             default:
-                return <Info className="w-5 h-5 text-blue-500 shrink-0" />;
+                return <Info className="w-5 h-5 text-white shrink-0 mt-0.5" />;
         }
     };
 
@@ -68,12 +68,12 @@ export const ToastProvider = ({ children }) => {
                         style={{ animation: 'slideIn 0.3s ease-out' }}
                     >
                         {getToastIcon(toast.type)}
-                        <p className="flex-1 text-sm font-medium leading-relaxed">
+                        <p className="flex-1 text-sm font-medium leading-relaxed drop-shadow-sm">
                             {toast.message}
                         </p>
                         <button
                             onClick={() => removeToast(toast.id)}
-                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors shrink-0"
+                            className="text-white/70 hover:text-white transition-colors shrink-0"
                             aria-label="Close"
                         >
                             <X className="w-4 h-4" />

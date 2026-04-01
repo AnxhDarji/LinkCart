@@ -15,10 +15,12 @@ import PublicProductPage from '../pages/PublicProductPage';
 import UserProfile from '../pages/UserProfile';
 import InterestsDashboard from '../pages/InterestsDashboard';
 import MyRequestsDashboard from '../pages/MyRequestsDashboard';
+import MyReportsDashboard from '../pages/MyReportsDashboard';
 import CompleteProfile from '../pages/CompleteProfile';
 import Login from '../pages/Login';
 import Signup from '../pages/Signup';
 import AuthSuccess from '../pages/AuthSuccess';
+import NotFound from '../pages/NotFound';
 
 // Decode token and check expiry
 const getValidRole = (token) => {
@@ -70,6 +72,7 @@ const AppRouter = () => {
                 <Route path="/account" element={<Account />} />
                 <Route path="/dashboard/interests" element={<InterestsDashboard />} />
                 <Route path="/dashboard/my-requests" element={<MyRequestsDashboard />} />
+                <Route path="/dashboard/reports" element={<MyReportsDashboard />} />
                 <Route path="/explore" element={<VisitOthers />} />
                 <Route path="/my-listings" element={<MyListings />} />
                 <Route path="/edit-listing/:id" element={<EditListing />} />
@@ -89,6 +92,8 @@ const AppRouter = () => {
                     }
                 />
 
+                {/* Catch-all 404 Route */}
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </Router>
     );

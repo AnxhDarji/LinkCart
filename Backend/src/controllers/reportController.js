@@ -63,6 +63,24 @@ const getAllReports = async (req, res) => {
     }
 };
 
+const getMyReports = async (req, res) => {
+    try {
+        const userId = req.user.custom_id;
+        const query = `
+            SELECT r.*, p.title as "productTitle", p.slug as "productSlug"
+            FROM reports r 
+            LEFT JOIN products p ON r.product_id = p.id 
+            WHERE r.reported_by = $1
+            ORDER BY r.created_at DESC
+        `;
+        const result = await pool.query(query, [userId]);
+        return res.status(200).json(result.rows);
+    } catch (error) {
+        console.error("Error fetching user reports:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 const getReportDetails = async (req, res) => {
     try {
         const { id } = req.params;
@@ -117,24 +135,23 @@ const updateReportStatus = async (req, res) => {
 
         const report = reportResult.rows[0];
 
-        if (report.status === 'resolved' || report.status === 'rejected') {
+        if (report.status === 'approved' || report.status === 'rejected') {
             await client.query('ROLLBACK');
             return res.status(400).json({ error: `Report is already finalized.` });
         }
 
-        if (status === 'resolved') {
-            // First, delete tracking dependencies from the reports table to bypass Foreign Key constraints
-            await client.query("DELETE FROM reports WHERE product_id = $1", [report.product_id]);
+        if (status === 'approved') {
+            // Detach product_id to prevent cascade deletion or FK constraint errors
+            await client.query("UPDATE reports SET status = 'approved', product_id = NULL WHERE product_id = $1", [report.product_id]);
             
             // Now safely sever the product definitively 
             await client.query("DELETE FROM products WHERE id = $1", [report.product_id]);
             
             await client.query('COMMIT');
             
-            // Return simulated updated report object back to React state without DB existence
             return res.status(200).json({ 
-                message: `Report marked as ${status} and product definitively removed.`, 
-                report: { ...report, status: 'resolved' } 
+                message: `Report marked as approved and product removed.`, 
+                report: { ...report, status: 'approved' } 
             });
         }
 
@@ -173,6 +190,7 @@ const deleteReport = async (req, res) => {
 module.exports = {
     createReport,
     getAllReports,
+    getMyReports,
     getReportDetails,
     updateReportStatus,
     deleteReport

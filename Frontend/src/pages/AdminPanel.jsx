@@ -23,6 +23,9 @@ const AdminPanel = () => {
     const [selectedReport, setSelectedReport] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalLoading, setModalLoading] = useState(false);
+    
+    // Custom Confirmation Dialog State
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', confirmText: 'Confirm', type: 'danger', onConfirm: null });
 
     const navigate = useNavigate();
     const toast = useToast();
@@ -132,22 +135,33 @@ const AdminPanel = () => {
     };
 
     // REMOVE PRODUCT
-    const handleRemoveProduct = async (productId) => {
-        const token = localStorage.getItem('token');
-        if (!window.confirm("Delete this product?")) return;
+    const handleRemoveProduct = (productId) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Delete Product',
+            message: 'Are you sure you want to delete this product? This action cannot be undone.',
+            confirmText: 'Delete Product',
+            type: 'danger',
+            onConfirm: async () => {
+                const token = localStorage.getItem('token');
+                try {
+                    const res = await fetch(`${API_BASE}/api/admin/products/${productId}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
 
-        try {
-            const res = await fetch(`${API_BASE}/api/admin/products/${productId}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (res.ok) {
-                setProducts(prev => prev.filter(p => p.id !== productId));
+                    if (res.ok) {
+                        setProducts(prev => prev.filter(p => p.id !== productId));
+                        toast.success("Product deleted successfully");
+                    } else {
+                        toast.error("Failed to delete product");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    toast.error("Error deleting product");
+                }
             }
-        } catch (err) {
-            console.error(err);
-        }
+        });
     };
 
     // REPORT ACTIONS
@@ -177,27 +191,36 @@ const AdminPanel = () => {
         }
     };
 
-    const handleDeleteReportAction = async (reportId) => {
-        if (!window.confirm("Are you sure you want to delete this report?")) return;
-        const token = localStorage.getItem('token');
-        setActionLoadingId(reportId);
-        try {
-            const res = await fetch(`${API_BASE}/api/reports/${reportId}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
-            });
+    const handleDeleteReportAction = (reportId) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Delete Report',
+            message: 'Are you sure you want to delete this report? This action cannot be undone.',
+            confirmText: 'Delete Report',
+            type: 'danger',
+            onConfirm: async () => {
+                const token = localStorage.getItem('token');
+                setActionLoadingId(reportId);
+                try {
+                    const res = await fetch(`${API_BASE}/api/reports/${reportId}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
 
-            if (res.ok) {
-                setReports(prev => prev.filter(r => r.id !== reportId));
-            } else {
-                toast.error('Failed to delete report');
+                    if (res.ok) {
+                        setReports(prev => prev.filter(r => r.id !== reportId));
+                        toast.success("Report deleted successfully");
+                    } else {
+                        toast.error('Failed to delete report');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    toast.error('Error deleting report');
+                } finally {
+                    setActionLoadingId(null);
+                }
             }
-        } catch (err) {
-            console.error(err);
-            toast.error('Error deleting report');
-        } finally {
-            setActionLoadingId(null);
-        }
+        });
     };
 
     const fetchReportDetails = async (reportId) => {
@@ -463,10 +486,10 @@ const AdminPanel = () => {
                                                             View
                                                         </button>
                                                         <button 
-                                                            onClick={() => handleUpdateReportStatus(r.id, 'resolved')}
-                                                            disabled={r.status === 'resolved' || r.status === 'rejected' || actionLoadingId === r.id}
+                                                            onClick={() => handleUpdateReportStatus(r.id, 'approved')}
+                                                            disabled={r.status === 'approved' || r.status === 'rejected' || actionLoadingId === r.id}
                                                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center ${
-                                                                r.status === 'resolved' || r.status === 'rejected' || actionLoadingId === r.id
+                                                                r.status === 'approved' || r.status === 'rejected' || actionLoadingId === r.id
                                                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                                                     : 'bg-[#10b981] hover:bg-emerald-600 text-white shadow-sm'
                                                             }`}
@@ -475,9 +498,9 @@ const AdminPanel = () => {
                                                         </button>
                                                         <button 
                                                             onClick={() => handleUpdateReportStatus(r.id, 'rejected')}
-                                                            disabled={r.status === 'resolved' || r.status === 'rejected' || actionLoadingId === r.id}
+                                                            disabled={r.status === 'approved' || r.status === 'rejected' || actionLoadingId === r.id}
                                                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center ${
-                                                                r.status === 'resolved' || r.status === 'rejected' || actionLoadingId === r.id
+                                                                r.status === 'approved' || r.status === 'rejected' || actionLoadingId === r.id
                                                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                                                     : 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm'
                                                             }`}
@@ -625,7 +648,7 @@ const AdminPanel = () => {
                             >
                                 Close
                             </button>
-                            {selectedReport && selectedReport.report_status !== 'resolved' && selectedReport.report_status !== 'rejected' && (
+                            {selectedReport && selectedReport.report_status !== 'approved' && selectedReport.report_status !== 'rejected' && (
                                 <>
                                     <button 
                                         onClick={async () => {
@@ -638,7 +661,7 @@ const AdminPanel = () => {
                                     </button>
                                     <button 
                                         onClick={async () => {
-                                            await handleUpdateReportStatus(selectedReport.report_id, 'resolved');
+                                            await handleUpdateReportStatus(selectedReport.report_id, 'approved');
                                             setIsModalOpen(false);
                                         }}
                                         className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#10b981] hover:bg-emerald-600 text-white shadow-sm transition-colors"
@@ -647,6 +670,41 @@ const AdminPanel = () => {
                                     </button>
                                 </>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Dialog Modal */}
+            {confirmDialog.isOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+                        <div className="p-6 text-center">
+                            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+                                <Flag className="h-8 w-8 text-red-600" aria-hidden="true" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{confirmDialog.title}</h3>
+                            <p className="text-sm text-gray-500 mb-8">{confirmDialog.message}</p>
+                            
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    type="button"
+                                    className="w-full inline-flex justify-center rounded-xl border border-transparent bg-red-600 px-4 py-3 text-base font-bold text-white shadow-sm hover:bg-red-700 focus:outline-none transition-colors"
+                                    onClick={() => {
+                                        if (confirmDialog.onConfirm) confirmDialog.onConfirm();
+                                        setConfirmDialog({ ...confirmDialog, isOpen: false });
+                                    }}
+                                >
+                                    {confirmDialog.confirmText}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="w-full inline-flex justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-base font-bold text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none transition-colors mt-2"
+                                    onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, ImageOff, MapPin, Calendar, Copy, Loader2 } from 'lucide-react';
+import { Package, ImageOff, MapPin, Calendar, Copy, Loader2, Trash2, Edit2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import API_BASE from '../utils/api';
@@ -31,6 +31,8 @@ const MyListings = () => {
     const [error, setError] = useState('');
     const [copiedId, setCopiedId] = useState(null);
     const [markingSoldId, setMarkingSoldId] = useState('');
+    const [togglingVisibilityId, setTogglingVisibilityId] = useState('');
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', confirmText: 'Confirm', type: 'danger', onConfirm: null });
     const toast = useToast();
 
     useEffect(() => {
@@ -93,6 +95,77 @@ const MyListings = () => {
         }
     };
 
+    const handleToggleVisibility = async (event, productId) => {
+        event.stopPropagation();
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        setTogglingVisibilityId(productId);
+
+        try {
+            const response = await fetch(`${API_BASE}/api/products/${productId}/visibility`, {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to change visibility.');
+            }
+
+            setListings((prev) =>
+                prev.map((listing) =>
+                    listing.id === productId ? { ...listing, visibility: data.newVisibility } : listing
+                )
+            );
+            toast.success(`Product is now ${data.newVisibility}.`);
+        } catch (fetchError) {
+            toast.error(fetchError.message || 'Failed to change visibility.');
+        } finally {
+            setTogglingVisibilityId('');
+        }
+    };
+
+    const handleDeleteProduct = (event, productId) => {
+        event.stopPropagation();
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Delete Product',
+            message: 'Are you sure you want to permanently delete this product? This action cannot be undone.',
+            confirmText: 'Delete Product',
+            type: 'danger',
+            onConfirm: async () => {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    navigate('/login');
+                    return;
+                }
+                try {
+                    const res = await fetch(`${API_BASE}/api/products/${productId}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    
+                    if (res.ok) {
+                        setListings((prev) => prev.filter((p) => p.id !== productId));
+                        toast.success("Product deleted successfully.");
+                    } else {
+                        const err = await res.json();
+                        toast.error(err.error || "Failed to delete product.");
+                    }
+                } catch (e) {
+                    toast.error("Error connecting to server.");
+                }
+            }
+        });
+    };
+
     return (
         <div className="min-h-screen" style={pageBg}>
             <Blobs />
@@ -150,9 +223,17 @@ const MyListings = () => {
                                         <ImagePlaceholder />
                                     )}
                                     <div className="absolute right-3 top-3 flex gap-2">
-                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow ${listing.visibility === 'private' ? 'bg-slate-600' : 'bg-gradient-to-r from-indigo-500 to-purple-600'}`}>
+                                        <button
+                                            onClick={(e) => handleToggleVisibility(e, listing.id)}
+                                            disabled={togglingVisibilityId === listing.id}
+                                            className={`px-2.5 py-1 rounded-lg text-xs font-bold text-white shadow hover:scale-105 active:scale-95 transition-all outline-none ${togglingVisibilityId === listing.id ? 'opacity-70 cursor-not-allowed' : ''} ${listing.visibility === 'private' ? 'bg-slate-600' : 'bg-gradient-to-r from-indigo-500 to-purple-600'}`}
+                                            title="Click to toggle visibility"
+                                        >
+                                            {togglingVisibilityId === listing.id ? (
+                                                <Loader2 size={14} className="animate-spin inline mr-1" />
+                                            ) : null}
                                             {listing.visibility === 'private' ? 'Private' : 'Public'}
-                                        </span>
+                                        </button>
                                         <ProductStatusBadge status={listing.status} className="bg-white/95" />
                                     </div>
                                 </div>
@@ -178,15 +259,36 @@ const MyListings = () => {
                                         <Copy size={14} />
                                         {copiedId === listing.slug ? 'Copied!' : 'Copy Link'}
                                     </button>
-                                    {listing.status !== 'sold' && (
+                                    <div className="flex gap-2 w-full mt-3">
+                                        {listing.status !== 'sold' && (
+                                            <button
+                                                onClick={(event) => handleMarkSold(event, listing.id)}
+                                                disabled={markingSoldId === listing.id}
+                                                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                                {markingSoldId === listing.id ? <Loader2 size={14} className="animate-spin" /> : 'Mark as Sold'}
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={(event) => handleMarkSold(event, listing.id)}
-                                            disabled={markingSoldId === listing.id}
-                                            className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-purple-600 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                navigate(`/edit-listing/${listing.id}`);
+                                            }}
+                                            className={`flex items-center justify-center p-2 rounded-xl border-2 border-indigo-100 text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors ${listing.status === 'sold' ? 'flex-1' : ''}`}
+                                            title="Edit product"
                                         >
-                                            {markingSoldId === listing.id ? <Loader2 size={14} className="animate-spin" /> : 'Mark as Sold'}
+                                            <Edit2 size={18} />
+                                            {listing.status === 'sold' && <span className="ml-2 text-sm font-semibold">Edit</span>}
                                         </button>
-                                    )}
+                                        <button
+                                            onClick={(event) => handleDeleteProduct(event, listing.id)}
+                                            className={`flex items-center justify-center p-2 rounded-xl border-2 border-red-100 text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors ${listing.status === 'sold' ? 'flex-1' : ''}`}
+                                            title="Delete product"
+                                        >
+                                            <Trash2 size={18} />
+                                            {listing.status === 'sold' && <span className="ml-2 text-sm font-semibold">Delete</span>}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             );
@@ -195,6 +297,41 @@ const MyListings = () => {
                 )}
             </div>
             <Footer />
+
+            {/* Confirmation Dialog Modal */}
+            {confirmDialog.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+                        <div className="p-6 text-center">
+                            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+                                <Trash2 className="h-8 w-8 text-red-600" aria-hidden="true" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">{confirmDialog.title}</h3>
+                            <p className="text-sm text-gray-500 mb-8">{confirmDialog.message}</p>
+                            
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    type="button"
+                                    className="w-full inline-flex justify-center rounded-xl border border-transparent bg-red-600 px-4 py-3 text-base font-bold text-white shadow-sm hover:bg-red-700 focus:outline-none transition-colors"
+                                    onClick={() => {
+                                        if (confirmDialog.onConfirm) confirmDialog.onConfirm();
+                                        setConfirmDialog({ ...confirmDialog, isOpen: false });
+                                    }}
+                                >
+                                    {confirmDialog.confirmText}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="w-full inline-flex justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-base font-bold text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none transition-colors mt-2"
+                                    onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
