@@ -7,6 +7,7 @@ import API_BASE from '../utils/api';
 import { getProductImageSrc } from '../utils/productImage';
 import UserAvatar from '../components/UserAvatar';
 import ProductStatusBadge from '../components/ProductStatusBadge';
+import { formatINR } from '../utils/currency';
 
 const ImagePlaceholder = () => (
     <div className="w-full h-48 bg-gradient-to-br from-slate-100 to-indigo-50 flex flex-col items-center justify-center gap-2 text-slate-400">
@@ -66,7 +67,7 @@ const Products = () => {
                                 <div className="p-5 flex flex-col flex-1">
                                     <h3 className="font-bold text-lg mb-1 truncate">{product.title}</h3>
                                     <p className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                                        ${product.price}
+                                        {formatINR(product.price)}
                                     </p>
                                     {product.location && (
                                         <div className="flex items-center gap-1 text-gray-500 text-sm mb-2">

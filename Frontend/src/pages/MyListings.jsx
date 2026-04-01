@@ -7,6 +7,7 @@ import API_BASE from '../utils/api';
 import { getProductImageSrc } from '../utils/productImage';
 import ProductStatusBadge from '../components/ProductStatusBadge';
 import { useToast } from '../context/ToastContext';
+import { formatINR } from '../utils/currency';
 
 const pageBg = { background: 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #fdf4ff 100%)' };
 const Blobs  = () => (
@@ -158,7 +159,7 @@ const MyListings = () => {
                                 <div className="p-5 flex flex-col flex-1">
                                     <h3 className="font-bold text-lg mb-1 truncate">{listing.title}</h3>
                                     <p className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                                        ${listing.price}
+                                        {formatINR(listing.price)}
                                     </p>
                                     {listing.location && (
                                         <div className="flex items-center gap-1 text-gray-500 text-sm mb-1">

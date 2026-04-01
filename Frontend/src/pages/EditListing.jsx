@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Tag, DollarSign, MapPin, AlignLeft, ArrowRight, X } from 'lucide-react';
+import { Tag, MapPin, AlignLeft, ArrowRight, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 const inputBase = 'w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 transition-all duration-200';
+
+const RupeeIcon = ({ size = 12, className = '' }) => (
+    <span
+        aria-hidden="true"
+        className={`inline-flex items-center justify-center font-semibold leading-none ${className}`.trim()}
+        style={{ fontSize: size }}
+    >
+        ₹
+    </span>
+);
 
 const Label = ({ icon: Icon, children }) => (
     <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
@@ -74,7 +84,7 @@ const EditListing = () => {
                                 <input type="text" name="title" className={inputBase} value={formData.title} onChange={handleChange} placeholder="Enter product title" required />
                             </div>
                             <div>
-                                <Label icon={DollarSign}>Price</Label>
+                                <Label icon={RupeeIcon}>Price</Label>
                                 <input type="number" name="price" className={inputBase} value={formData.price} onChange={handleChange} placeholder="Enter price" required />
                             </div>
                             <div>

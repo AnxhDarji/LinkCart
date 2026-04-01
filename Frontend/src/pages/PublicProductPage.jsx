@@ -10,6 +10,7 @@ import UserAvatar from '../components/UserAvatar';
 import ProductStatusBadge from '../components/ProductStatusBadge';
 import { useAppContext } from '../context/AppContext';
 import { getProfileCompletionDetails, isProfileComplete } from '../utils/profileCompletion';
+import { formatINR } from '../utils/currency';
 
 const PublicProductPage = () => {
     const { slug } = useParams();
@@ -251,7 +252,7 @@ const PublicProductPage = () => {
                             </div>
 
                             <p className="mb-5 text-4xl font-extrabold text-gray-900">
-                                ${product.price}
+                                {formatINR(product.price)}
                             </p>
 
                             {product.location && (

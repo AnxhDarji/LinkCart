@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Copy, ExternalLink, CheckCircle, Tag, DollarSign, MapPin, AlignLeft, Eye, ArrowRight, Loader2, ImagePlus } from 'lucide-react';
+import { Copy, ExternalLink, CheckCircle, Tag, MapPin, AlignLeft, Eye, ArrowRight, Loader2, ImagePlus } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import API_BASE from '../utils/api';
@@ -8,6 +8,16 @@ import { useAppContext } from '../context/AppContext';
 import { getProfileCompletionDetails, isProfileComplete } from '../utils/profileCompletion';
 
 const inputBase = 'w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 transition-all duration-200';
+
+const RupeeIcon = ({ size = 12, className = '' }) => (
+    <span
+        aria-hidden="true"
+        className={`inline-flex items-center justify-center font-semibold leading-none ${className}`.trim()}
+        style={{ fontSize: size }}
+    >
+        ₹
+    </span>
+);
 
 const Label = ({ icon, children, required }) => {
     const IconComponent = icon;
@@ -200,7 +210,7 @@ const PostAd = () => {
                                 <input type="text" name="title" className={inputBase} placeholder="Enter product title" value={formData.title} onChange={handleChange} required />
                             </div>
                             <div>
-                                <Label icon={DollarSign} required>Price</Label>
+                                <Label icon={RupeeIcon} required>Price</Label>
                                 <input type="number" name="price" min="0" className={inputBase} placeholder="Enter price" value={formData.price} onChange={handleChange} required />
                             </div>
                             <div>

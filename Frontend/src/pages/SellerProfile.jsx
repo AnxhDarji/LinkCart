@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { formatINR } from '../utils/currency';
 
 const SellerProfile = () => {
     const navigate = useNavigate();
@@ -55,7 +56,7 @@ const SellerProfile = () => {
                                 </div>
                                 <div className="p-5">
                                     <h3 className="text-lg font-bold mb-2 text-gray-800">{listing.title}</h3>
-                                    <p className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">${listing.price}</p>
+                                    <p className="text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{formatINR(listing.price)}</p>
                                 </div>
                             </div>
                         ))}

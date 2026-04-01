@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import API_BASE from '../utils/api';
 import { getProductImageSrc } from '../utils/productImage';
 import { useToast } from '../context/ToastContext';
+import { formatINR } from '../utils/currency';
 const ProductDetail = () => {
     const navigate = useNavigate();
     const { slug } = useParams();
@@ -136,7 +137,7 @@ const ProductDetail = () => {
                             </span>
                         </div>
 
-                        <p className="text-5xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">${product.price}</p>
+                        <p className="text-5xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-6">{formatINR(product.price)}</p>
 
                         {product.location && (
                             <div className="flex items-center gap-2 text-gray-600 mb-8 pb-8 border-b border-slate-200">

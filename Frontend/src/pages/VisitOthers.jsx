@@ -1,19 +1,20 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { formatINR } from '../utils/currency';
 
 const VisitOthers = () => {
     // Sample product data
     const products = [
-        { id: 1, name: "Wireless Headphones", description: "High-quality sound with noise cancellation", price: "$99", image: "" },
-        { id: 2, name: "Smart Watch", description: "Track your fitness and stay connected", price: "$199", image: "" },
-        { id: 3, name: "Laptop Stand", description: "Ergonomic design for better posture", price: "$49", image: "" },
-        { id: 4, name: "Phone Case", description: "Durable protection for your device", price: "$25", image: "" },
-        { id: 5, name: "Bluetooth Speaker", description: "Portable speaker with amazing bass", price: "$79", image: "" },
-        { id: 6, name: "Desk Lamp", description: "LED lamp with adjustable brightness", price: "$35", image: "" },
-        { id: 7, name: "Coffee Mug", description: "Keep your coffee hot for hours", price: "$15", image: "" },
-        { id: 8, name: "Notebook Set", description: "Premium quality paper for writing", price: "$20", image: "" },
-        { id: 9, name: "USB Cable", description: "Fast charging and data transfer", price: "$12", image: "" }
+        { id: 1, name: "Wireless Headphones", description: "High-quality sound with noise cancellation", price: 99, image: "" },
+        { id: 2, name: "Smart Watch", description: "Track your fitness and stay connected", price: 199, image: "" },
+        { id: 3, name: "Laptop Stand", description: "Ergonomic design for better posture", price: 49, image: "" },
+        { id: 4, name: "Phone Case", description: "Durable protection for your device", price: 25, image: "" },
+        { id: 5, name: "Bluetooth Speaker", description: "Portable speaker with amazing bass", price: 79, image: "" },
+        { id: 6, name: "Desk Lamp", description: "LED lamp with adjustable brightness", price: 35, image: "" },
+        { id: 7, name: "Coffee Mug", description: "Keep your coffee hot for hours", price: 15, image: "" },
+        { id: 8, name: "Notebook Set", description: "Premium quality paper for writing", price: 20, image: "" },
+        { id: 9, name: "USB Cable", description: "Fast charging and data transfer", price: 12, image: "" }
     ];
 
     // Sample user data
@@ -42,7 +43,7 @@ const VisitOthers = () => {
                                         <h3 className="product-name">{product.name}</h3>
                                         <p className="product-description">{product.description}</p>
                                         <div className="product-footer">
-                                            <span className="product-price">{product.price}</span>
+                                            <span className="product-price">{formatINR(product.price)}</span>
                                             <button className="view-buy-btn">View / Buy</button>
                                         </div>
                                     </div>

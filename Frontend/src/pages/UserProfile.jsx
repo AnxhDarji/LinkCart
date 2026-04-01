@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import API_BASE from '../utils/api';
 import { getProductImageSrc } from '../utils/productImage';
 import UserAvatar from '../components/UserAvatar';
+import { formatINR } from '../utils/currency';
 
 const pageBg = { background: 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #fdf4ff 100%)' };
 const Blobs  = () => (
@@ -130,7 +131,7 @@ const UserProfile = () => {
                                 <div className="p-4">
                                     <h3 className="font-bold text-base mb-1 truncate">{product.title}</h3>
                                     <p className="text-xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-1">
-                                        ${product.price}
+                                        {formatINR(product.price)}
                                     </p>
                                     {product.location && (
                                         <div className="flex items-center gap-1 text-gray-400 text-xs">
