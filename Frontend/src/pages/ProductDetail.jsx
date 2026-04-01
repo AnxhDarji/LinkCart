@@ -3,6 +3,7 @@ import { Star, MapPin, Flag, X, ImageOff } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useToast } from '../context/ToastContext';
 
 const ProductDetail = () => {
     const navigate = useNavigate();
@@ -18,6 +19,7 @@ const ProductDetail = () => {
     const [reviewRating, setReviewRating] = useState(0);
     const [reviewComment, setReviewComment] = useState('');
     const [reviews, setReviews] = useState([]);
+    const toast = useToast();
 
     useEffect(() => {
         fetch(`http://localhost:5000/api/products/${slug}`)
@@ -53,12 +55,42 @@ const ProductDetail = () => {
 
     const averageRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : 0;
 
-    const handleReportSubmit = () => {
-        setShowReportModal(false);
-        setReportReason('');
-        setReportDescription('');
-        setShowSuccessMessage(true);
-        setTimeout(() => setShowSuccessMessage(false), 3000);
+    const handleReportSubmit = async (e) => {
+        if (e) e.preventDefault();
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.warning('You must be logged in to submit a report.');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/api/reports', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    product_id: product.id || product._id || slug,
+                    reported_by: localStorage.getItem('customId') || 'unknown',
+                    reason: `[${reportReason}] ${reportDescription}`
+                })
+            });
+
+            if (response.ok) {
+                setShowSuccessMessage(true);
+                setShowReportModal(false);
+                setReportReason('');
+                setReportDescription('');
+                setTimeout(() => setShowSuccessMessage(false), 3000);
+            } else {
+                toast.error('Failed to submit report. Please try again later.');
+            }
+        } catch (error) {
+            console.error('Error submitting report:', error);
+            toast.error('An error occurred. Please try again.');
+        }
     };
 
     const handleReviewSubmit = () => {
@@ -200,27 +232,29 @@ const ProductDetail = () => {
                             <h2 className="text-2xl font-bold" style={{ fontFamily: 'Clash Display, sans-serif' }}>Report Listing</h2>
                             <button onClick={() => setShowReportModal(false)}><X size={24} /></button>
                         </div>
-                        <div className="p-6 space-y-6">
-                            <div>
-                                <label className="block text-sm font-bold mb-3">Reason</label>
-                                <select className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
-                                    <option value="">Select a reason</option>
-                                    <option value="spam">Spam</option>
-                                    <option value="fake">Fake Product</option>
-                                    <option value="inappropriate">Inappropriate Content</option>
-                                    <option value="scam">Scam</option>
-                                    <option value="other">Other</option>
-                                </select>
+                        <form onSubmit={handleReportSubmit}>
+                            <div className="p-6 space-y-6">
+                                <div>
+                                    <label className="block text-sm font-bold mb-3">Reason</label>
+                                    <select className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500" value={reportReason} onChange={(e) => setReportReason(e.target.value)} required>
+                                        <option value="">Select a reason</option>
+                                        <option value="spam">Spam</option>
+                                        <option value="fake">Fake Product</option>
+                                        <option value="inappropriate">Inappropriate Content</option>
+                                        <option value="scam">Scam</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold mb-3">Description</label>
+                                    <textarea className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-vertical" placeholder="Describe the issue" rows="4" value={reportDescription} onChange={(e) => setReportDescription(e.target.value)} required />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-bold mb-3">Description</label>
-                                <textarea className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-vertical" placeholder="Describe the issue" rows="4" value={reportDescription} onChange={(e) => setReportDescription(e.target.value)} />
+                            <div className="flex gap-3 p-6 border-t border-slate-200">
+                                <button type="button" className="flex-1 border-2 border-slate-300 text-gray-700 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 transition-all" onClick={() => setShowReportModal(false)}>Cancel</button>
+                                <button type="submit" className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold px-6 py-3 rounded-xl hover:scale-105 transition-all">Submit Report</button>
                             </div>
-                        </div>
-                        <div className="flex gap-3 p-6 border-t border-slate-200">
-                            <button className="flex-1 border-2 border-slate-300 text-gray-700 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 transition-all" onClick={() => setShowReportModal(false)}>Cancel</button>
-                            <button className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold px-6 py-3 rounded-xl hover:scale-105 transition-all" onClick={handleReportSubmit}>Submit Report</button>
-                        </div>
+                        </form>
                     </div>
                 </div>
             )}
