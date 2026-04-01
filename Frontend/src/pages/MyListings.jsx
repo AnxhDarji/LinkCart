@@ -4,6 +4,7 @@ import { Package, ImageOff, MapPin, Calendar, Copy, Loader2 } from 'lucide-react
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import API_BASE from '../utils/api';
+import { getProductImageSrc } from '../utils/productImage';
 
 const pageBg = { background: 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #fdf4ff 100%)' };
 const Blobs  = () => (
@@ -92,15 +93,17 @@ const MyListings = () => {
 
                 {!loading && !error && listings.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {listings.map((listing) => (
+                        {listings.map((listing) => {
+                            const imageSrc = getProductImageSrc(listing);
+                            return (
                             <div
                                 key={listing.id}
                                 className="bg-white/80 backdrop-blur-sm border border-white rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgba(99,102,241,0.15)] hover:-translate-y-1 cursor-pointer flex flex-col"
                                 onClick={() => navigate(`/p/${listing.slug}`)}
                             >
                                 <div className="relative">
-                                    {listing.image_url ? (
-                                        <img src={listing.image_url} alt={listing.title} className="w-full h-48 object-cover" />
+                                    {imageSrc ? (
+                                        <img src={imageSrc} alt={listing.title} className="w-full h-48 object-cover" />
                                     ) : (
                                         <ImagePlaceholder />
                                     )}
@@ -132,7 +135,8 @@ const MyListings = () => {
                                     </button>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

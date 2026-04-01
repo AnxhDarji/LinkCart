@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ImageOff, MapPin, Calendar } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import API_BASE from '../utils/api';
+import { getProductImageSrc } from '../utils/productImage';
 
 const ImagePlaceholder = () => (
     <div className="w-full h-48 bg-gradient-to-br from-slate-100 to-indigo-50 flex flex-col items-center justify-center gap-2 text-slate-400">
@@ -18,7 +20,7 @@ const Products = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/products/public')
+        fetch(`${API_BASE}/api/products/public`)
             .then((res) => res.json())
             .then((data) => {
                 if (Array.isArray(data)) setProducts(data);
@@ -44,15 +46,17 @@ const Products = () => {
 
                 {!loading && !error && products.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {products.map((product) => (
+                        {products.map((product) => {
+                            const imageSrc = getProductImageSrc(product);
+                            return (
                             <div
                                 key={product.id}
                                 className="group bg-white rounded-2xl border border-slate-200 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl flex flex-col"
                                 onClick={() => navigate(`/p/${product.slug}`)}
                             >
                                 <div className="overflow-hidden">
-                                    {product.image_url ? (
-                                        <img src={product.image_url} alt={product.title} className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500" />
+                                    {imageSrc ? (
+                                        <img src={imageSrc} alt={product.title} className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500" />
                                     ) : (
                                         <ImagePlaceholder />
                                     )}
@@ -83,7 +87,8 @@ const Products = () => {
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

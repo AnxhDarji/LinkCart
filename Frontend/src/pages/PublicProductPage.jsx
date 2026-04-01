@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { MapPin, ImageOff, User, Copy, ExternalLink } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import API_BASE from '../utils/api';
+import { getProductImageSrc } from '../utils/productImage';
 
 const PublicProductPage = () => {
     const { slug } = useParams();
@@ -13,7 +15,7 @@ const PublicProductPage = () => {
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        fetch(`http://localhost:5000/api/products/${slug}`)
+        fetch(`${API_BASE}/api/products/${slug}`)
             .then((res) => {
                 if (res.status === 404) { setNotFound(true); return null; }
                 return res.json();
@@ -28,6 +30,7 @@ const PublicProductPage = () => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
+    const imageSrc = getProductImageSrc(product);
 
     if (loading) return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50">
@@ -76,8 +79,8 @@ const PublicProductPage = () => {
                     <div className="grid md:grid-cols-2 gap-10 mb-10">
                         {/* Image */}
                         <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xl">
-                            {product.image_url ? (
-                                <img src={product.image_url} alt={product.title} className="w-full h-[420px] object-cover" />
+                            {imageSrc ? (
+                                <img src={imageSrc} alt={product.title} className="w-full h-[420px] object-cover" />
                             ) : (
                                 <div className="w-full h-[420px] bg-gradient-to-br from-slate-100 to-indigo-50 flex flex-col items-center justify-center gap-3 text-slate-400">
                                     <ImageOff size={56} />

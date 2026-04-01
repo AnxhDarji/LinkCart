@@ -3,6 +3,8 @@ import { Star, MapPin, Flag, X, ImageOff } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import API_BASE from '../utils/api';
+import { getProductImageSrc } from '../utils/productImage';
 
 const ProductDetail = () => {
     const navigate = useNavigate();
@@ -20,7 +22,7 @@ const ProductDetail = () => {
     const [reviews, setReviews] = useState([]);
 
     useEffect(() => {
-        fetch(`http://localhost:5000/api/products/${slug}`)
+        fetch(`${API_BASE}/api/products/${slug}`)
             .then((res) => {
                 if (res.status === 404) { setNotFound(true); return null; }
                 return res.json();
@@ -52,6 +54,7 @@ const ProductDetail = () => {
     );
 
     const averageRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : 0;
+    const imageSrc = getProductImageSrc(product);
 
     const handleReportSubmit = () => {
         setShowReportModal(false);
@@ -83,8 +86,8 @@ const ProductDetail = () => {
                 <div className="grid md:grid-cols-2 gap-12 mb-16">
                     <div>
                         <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xl mb-6">
-                            {product.image_url ? (
-                                <img src={product.image_url} alt={product.title} className="w-full h-[500px] object-cover" />
+                            {imageSrc ? (
+                                <img src={imageSrc} alt={product.title} className="w-full h-[500px] object-cover" />
                             ) : (
                                 <div className="w-full h-[500px] bg-gradient-to-br from-slate-100 to-indigo-50 flex flex-col items-center justify-center gap-3 text-slate-400">
                                     <ImageOff size={56} />

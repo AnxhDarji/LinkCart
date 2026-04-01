@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { MapPin, User, ImageOff, Package, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import API_BASE from '../utils/api';
+import { getProductImageSrc } from '../utils/productImage';
 
 const pageBg = { background: 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 50%, #fdf4ff 100%)' };
 const Blobs  = () => (
@@ -28,7 +30,7 @@ const UserProfile = () => {
     const [notFound, setNotFound] = useState(false);
 
     useEffect(() => {
-        fetch(`http://localhost:5000/api/users/${custom_id}`)
+        fetch(`${API_BASE}/api/users/${custom_id}`)
             .then((res) => {
                 if (res.status === 404) { setNotFound(true); return null; }
                 return res.json();
@@ -110,15 +112,17 @@ const UserProfile = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {products.map((product) => (
+                        {products.map((product) => {
+                            const imageSrc = getProductImageSrc(product);
+                            return (
                             <div
                                 key={product.id}
                                 className="group bg-white/80 backdrop-blur-sm border border-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_8px_30px_rgba(99,102,241,0.15)]"
                                 onClick={() => navigate(`/p/${product.slug}`)}
                             >
                                 <div className="overflow-hidden">
-                                    {product.image_url ? (
-                                        <img src={product.image_url} alt={product.title} className="w-full h-44 object-cover group-hover:scale-110 transition-transform duration-500" />
+                                    {imageSrc ? (
+                                        <img src={imageSrc} alt={product.title} className="w-full h-44 object-cover group-hover:scale-110 transition-transform duration-500" />
                                     ) : (
                                         <ImagePlaceholder />
                                     )}
@@ -136,7 +140,8 @@ const UserProfile = () => {
                                     )}
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

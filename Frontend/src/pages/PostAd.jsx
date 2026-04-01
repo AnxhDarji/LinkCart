@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Copy, ExternalLink, CheckCircle, Tag, DollarSign, MapPin, AlignLeft, Eye, ArrowRight, Loader2 } from 'lucide-react';
+import { Copy, ExternalLink, CheckCircle, Tag, DollarSign, MapPin, AlignLeft, Eye, ArrowRight, Loader2, ImagePlus } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import API_BASE from '../utils/api';
@@ -17,12 +17,14 @@ const Label = ({ icon: Icon, children, required }) => (
 const PostAd = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ title: '', price: '', location: '', description: '', visibility: 'public' });
+    const [image, setImage] = useState(null);
     const [error, setError]       = useState('');
     const [loading, setLoading]   = useState(false);
     const [createdSlug, setCreatedSlug] = useState(null);
     const [copied, setCopied]     = useState(false);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleFileChange = (e) => setImage(e.target.files[0] || null);
     const productLink  = createdSlug ? `${window.location.origin}/p/${createdSlug}` : '';
 
     const handleCopy = () => {
@@ -42,10 +44,20 @@ const PostAd = () => {
         if (!token) { navigate('/login'); return; }
         setLoading(true);
         try {
+            const payload = new FormData();
+            payload.append('title', formData.title);
+            payload.append('description', formData.description);
+            payload.append('price', parseFloat(formData.price));
+            payload.append('location', formData.location);
+            payload.append('visibility', formData.visibility);
+            if (image) {
+                payload.append('image', image);
+            }
+
             const res  = await fetch(`${API_BASE}/api/products/create`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ title: formData.title, description: formData.description, price: parseFloat(formData.price), location: formData.location, visibility: formData.visibility }),
+                headers: { Authorization: `Bearer ${token}` },
+                body: payload,
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to create product');
@@ -98,7 +110,7 @@ const PostAd = () => {
                         </div>
 
                         <button
-                            onClick={() => { setCreatedSlug(null); setFormData({ title: '', price: '', location: '', description: '', visibility: 'public' }); }}
+                            onClick={() => { setCreatedSlug(null); setFormData({ title: '', price: '', location: '', description: '', visibility: 'public' }); setImage(null); }}
                             className="mt-5 text-xs text-slate-400 hover:text-indigo-500 transition-colors"
                         >
                             + Create another link
@@ -161,6 +173,16 @@ const PostAd = () => {
                                     <option value="public">Public</option>
                                     <option value="private">Private (Link Only)</option>
                                 </select>
+                            </div>
+                            <div>
+                                <Label icon={ImagePlus}>Image</Label>
+                                <input
+                                    type="file"
+                                    name="image"
+                                    accept="image/*"
+                                    className={`${inputBase} file:mr-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-indigo-600 hover:file:bg-indigo-100`}
+                                    onChange={handleFileChange}
+                                />
                             </div>
 
                             <button
