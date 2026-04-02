@@ -181,23 +181,33 @@ exports.toggleVisibility = async (req, res) => {
 };
 
 exports.deleteProduct = async (req, res) => {
+    const client = await db.connect();
     try {
         const { id } = req.params;
         const userId = req.user.custom_id;
 
-        const result = await db.query(
+        await client.query("BEGIN");
+        await client.query("DELETE FROM interests WHERE product_id = $1", [id]);
+        await client.query("UPDATE reports SET product_id = NULL WHERE product_id = $1", [id]);
+
+        const result = await client.query(
             "DELETE FROM products WHERE id = $1 AND user_id = $2 RETURNING *",
             [id, userId]
         );
 
         if (result.rows.length === 0) {
+            await client.query("ROLLBACK");
             return res.status(404).json({ error: "Product not found or unauthorized to delete." });
         }
 
+        await client.query("COMMIT");
         res.json({ message: "Product deleted successfully." });
     } catch (error) {
+        await client.query("ROLLBACK");
         console.error("deleteProduct error:", error.message);
         res.status(500).json({ error: "Failed to delete product." });
+    } finally {
+        client.release();
     }
 };
 

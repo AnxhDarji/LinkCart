@@ -12,19 +12,30 @@ const getAllProducts = async (req, res) => {
 };
 
 const deleteProduct = async (req, res) => {
+    const client = await pool.connect();
     try {
         const { id } = req.params;
+
+        await client.query("BEGIN");
+        await client.query("DELETE FROM interests WHERE product_id = $1", [id]);
+        await client.query("UPDATE reports SET product_id = NULL WHERE product_id = $1", [id]);
+
         const deleteQuery = "DELETE FROM products WHERE id = $1 RETURNING *";
-        const result = await pool.query(deleteQuery, [id]);
+        const result = await client.query(deleteQuery, [id]);
 
         if (result.rowCount === 0) {
+            await client.query("ROLLBACK");
             return res.status(404).json({ error: "Product not found" });
         }
 
+        await client.query("COMMIT");
         return res.status(200).json({ message: "Product deleted successfully" });
     } catch (error) {
+        await client.query("ROLLBACK");
         console.error("Error deleting product:", error);
         return res.status(500).json({ error: "Internal server error" });
+    } finally {
+        client.release();
     }
 };
 

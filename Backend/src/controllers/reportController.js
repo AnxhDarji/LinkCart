@@ -143,6 +143,9 @@ const updateReportStatus = async (req, res) => {
         if (status === 'approved') {
             // Detach product_id to prevent cascade deletion or FK constraint errors
             await client.query("UPDATE reports SET status = 'approved', product_id = NULL WHERE product_id = $1", [report.product_id]);
+
+            // Remove dependent interest rows before deleting the product itself.
+            await client.query("DELETE FROM interests WHERE product_id = $1", [report.product_id]);
             
             // Now safely sever the product definitively 
             await client.query("DELETE FROM products WHERE id = $1", [report.product_id]);
