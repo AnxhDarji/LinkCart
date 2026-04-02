@@ -398,7 +398,12 @@ const AdminPanel = () => {
                                         products.map(p => (
                                             <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                                                 <td className="py-4 px-6 text-gray-800 font-medium">{p.title}</td>
-                                                <td className="py-4 px-6 text-gray-500">{p.custom_id || p.seller_id}</td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-gray-800 font-medium">{p.owner_name || 'Unknown Owner'}</span>
+                                                        <span className="text-gray-400 text-xs">{p.user_id || p.seller_id || p.custom_id}</span>
+                                                    </div>
+                                                </td>
                                                 <td className="py-4 px-6">
                                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-[#dcfce7] text-[#166534]`}>
                                                         {p.status || 'public'} 

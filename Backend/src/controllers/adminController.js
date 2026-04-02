@@ -2,7 +2,12 @@ const pool = require("../config/db");
 
 const getAllProducts = async (req, res) => {
     try {
-        const query = "SELECT * FROM products ORDER BY created_at DESC";
+        const query = `
+            SELECT p.*, u.full_name AS owner_name 
+            FROM products p 
+            LEFT JOIN users u ON u.custom_id = p.user_id 
+            ORDER BY p.created_at DESC
+        `;
         const result = await pool.query(query);
         return res.status(200).json(result.rows);
     } catch (error) {
