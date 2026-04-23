@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, Menu, X, Plus, User, LogOut, LayoutList, Flag } from 'lucide-react';
+import { Bell, Menu, X, Plus, User, LogOut, LayoutList, Flag, Settings } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import UserAvatar from './UserAvatar';
 import { getDisplayName } from '../utils/profile';
@@ -89,6 +89,9 @@ const Navbar = () => {
                                         <Link to="/account" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-sm font-medium">
                                             <User size={15} />My Profile
                                         </Link>
+                                        <Link to="/settings" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-sm font-medium">
+                                            <Settings size={15} />Settings
+                                        </Link>
                                         <Link to="/my-listings" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-sm font-medium">
                                             <LayoutList size={15} />My Listings
                                         </Link>
@@ -133,6 +136,7 @@ const Navbar = () => {
                                 New Interests {sellerInterestCount > 0 ? `(${sellerInterestCount})` : ''}
                             </Link>
                             <Link to="/account" className="text-slate-700 font-medium p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors" onClick={() => setIsMenuOpen(false)}>My Profile</Link>
+                            <Link to="/settings" className="text-slate-700 font-medium p-3 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 transition-colors" onClick={() => setIsMenuOpen(false)}>Settings</Link>
                             <Link to="/post-ad" className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold p-3 rounded-xl hover:scale-105 transition-all" onClick={() => setIsMenuOpen(false)}><Plus size={16} />Create Link</Link>
                             <button onClick={handleLogout} className="flex items-center justify-center gap-2 text-red-500 font-medium p-3 rounded-lg hover:bg-red-50 transition-colors"><LogOut size={16} />Logout</button>
                         </>

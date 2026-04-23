@@ -19,6 +19,10 @@ import MyReportsDashboard from '../pages/MyReportsDashboard';
 import CompleteProfile from '../pages/CompleteProfile';
 import Login from '../pages/Login';
 import Signup from '../pages/Signup';
+import ForgotPassword from '../pages/ForgotPassword';
+import VerifyOtp from '../pages/VerifyOtp';
+import ResetPassword from '../pages/ResetPassword';
+import Settings from '../pages/Settings';
 import AuthSuccess from '../pages/AuthSuccess';
 import NotFound from '../pages/NotFound';
 
@@ -62,7 +66,11 @@ const AppRouter = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/verify-otp" element={<VerifyOtp />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/auth-success" element={<AuthSuccess />} />
+                <Route path="/settings" element={<Settings />} />
 
                 {/* User routes */}
                 <Route path="/dashboard" element={<Navigate to="/account" replace />} />

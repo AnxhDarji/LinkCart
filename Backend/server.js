@@ -51,10 +51,12 @@ const otpLimiter = rateLimit({
 
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/send-otp", otpLimiter);
+app.use("/api/auth/forgot-password", otpLimiter);
 app.use("/api/auth/verify-otp", authLimiter);
 
 app.use("/auth/login", authLimiter);
 app.use("/auth/send-otp", otpLimiter);
+app.use("/auth/forgot-password", otpLimiter);
 app.use("/auth/verify-otp", authLimiter);
 
 app.use("/api/auth", authRoutes);

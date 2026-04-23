@@ -188,6 +188,55 @@ exports.sendOtp = async (req, res) => {
     }
 };
 
+exports.forgotPasswordSendOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email || !emailRegex.test(email)) {
+            return res.status(400).json({ success: false, message: "Invalid email address." });
+        }
+
+        const normalizedEmail = email.toLowerCase();
+
+        const userResult = await pool.query(
+            "SELECT custom_id FROM users WHERE email = $1",
+            [normalizedEmail]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: "No account found with this email" });
+        }
+
+        const existingOtp = otpStore[normalizedEmail];
+
+        if (existingOtp && (Date.now() - existingOtp.lastRequested < OTP_COOLDOWN_MS)) {
+            const remainingTime = Math.ceil((OTP_COOLDOWN_MS - (Date.now() - existingOtp.lastRequested)) / 1000);
+            return res.status(429).json({ success: false, message: `Please wait ${remainingTime} seconds before requesting a new OTP.` });
+        }
+
+        const otp = generateOTP();
+
+        otpStore[normalizedEmail] = {
+            otp,
+            expiresAt: Date.now() + OTP_EXPIRY_MS,
+            attempts: 0,
+            lastRequested: Date.now(),
+        };
+
+        await sendEmail({
+            to: normalizedEmail,
+            subject: "Your verification code",
+            text: `Your OTP is ${otp}`
+        });
+
+        return res.json({ success: true, message: "OTP sent successfully." });
+
+    } catch (error) {
+        console.error("[OTP Error] forgotPasswordSendOtp:", error.message);
+        return res.status(500).json({ success: false, message: "OTP failed." });
+    }
+};
+
 exports.verifyOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
@@ -238,4 +287,51 @@ exports.googleAuthSuccess = async (req, res) => {
 
 exports.googleAuthFailure = (req, res) => {
     return res.redirect(buildFrontendUrl("/login", { error: "google_failed" }));
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body;
+
+        if (!email || !emailRegex.test(email)) {
+            return res.status(400).json({ message: "Invalid email address." });
+        }
+
+        if (!newPassword) {
+            return res.status(400).json({ message: "New password is required." });
+        }
+
+        if (
+            newPassword.length < 8 ||
+            !/[A-Z]/.test(newPassword) ||
+            !/[a-z]/.test(newPassword) ||
+            !/[0-9]/.test(newPassword) ||
+            !/[!@#$%^&*]/.test(newPassword)
+        ) {
+            return res.status(400).json({ message: "Weak password." });
+        }
+
+        const normalizedEmail = email.toLowerCase();
+
+        const userResult = await pool.query(
+            "SELECT custom_id FROM users WHERE email = $1",
+            [normalizedEmail]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(400).json({ message: "User not found." });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+
+        await pool.query(
+            "UPDATE users SET password = $1 WHERE email = $2",
+            [hashedPassword, normalizedEmail]
+        );
+
+        return res.json({ message: "Password reset successfully." });
+    } catch (error) {
+        console.error("[Auth Error] resetPassword:", error.message);
+        return res.status(500).json({ message: "Password reset failed." });
+    }
 };

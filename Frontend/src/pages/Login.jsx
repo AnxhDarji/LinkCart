@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -19,8 +19,10 @@ const inputBase = 'w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-sm tex
 
 const Login = () => {
     const [serverError, setServerError] = useState('');
+    const location = useLocation();
     const navigate = useNavigate();
     const { login } = useAppContext();
+    const successMessage = location.state?.successMessage || '';
 
     const formik = useFormik({
         initialValues: { email: '', password: '' },
@@ -82,6 +84,12 @@ const Login = () => {
 
                     <div className="bg-white/80 backdrop-blur-xl border border-white rounded-2xl p-8 shadow">
 
+                        {successMessage && (
+                            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm mb-6">
+                                {successMessage}
+                            </div>
+                        )}
+
                         {serverError && (
                             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm mb-6">
                                 {serverError}
@@ -124,6 +132,11 @@ const Login = () => {
                                 {formik.touched.password && formik.errors.password && (
                                     <p className="text-xs text-red-500 mt-1">{formik.errors.password}</p>
                                 )}
+                                <div className="mt-2 text-right">
+                                    <Link to="/forgot-password" className="text-xs text-purple-500 hover:text-purple-600 font-medium">
+                                        Forgot Password?
+                                    </Link>
+                                </div>
                             </div>
 
                             <button
