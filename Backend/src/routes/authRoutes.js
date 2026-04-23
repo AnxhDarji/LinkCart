@@ -1,6 +1,7 @@
 const express = require("express");
 const passport = require("../config/passport");
 const authController = require("../controllers/authController");
+const verifyToken = require("../middleware/verifyToken");
 
 const router = express.Router();
 
@@ -10,6 +11,8 @@ router.post("/send-otp", authController.sendOtp);
 router.post("/forgot-password", authController.forgotPasswordSendOtp);
 router.post("/verify-otp", authController.verifyOtp);
 router.post("/reset-password", authController.resetPassword);
+router.post("/change-password", verifyToken, authController.changePassword);
+router.delete("/delete-account", verifyToken, authController.deleteAccount);
 
 router.get(
     "/google",

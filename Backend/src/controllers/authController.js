@@ -335,3 +335,117 @@ exports.resetPassword = async (req, res) => {
         return res.status(500).json({ message: "Password reset failed." });
     }
 };
+
+exports.changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const customId = req.user?.custom_id;
+
+        if (!customId) {
+            return res.status(401).json({ success: false, message: "Unauthorized." });
+        }
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ success: false, message: "Current and new password are required." });
+        }
+
+        if (
+            newPassword.length < 8 ||
+            !/[A-Z]/.test(newPassword) ||
+            !/[a-z]/.test(newPassword) ||
+            !/[0-9]/.test(newPassword) ||
+            !/[!@#$%^&*]/.test(newPassword)
+        ) {
+            return res.status(400).json({ success: false, message: "Weak password." });
+        }
+
+        const userResult = await pool.query(
+            "SELECT password FROM users WHERE custom_id = $1",
+            [customId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, userResult.rows[0].password);
+        if (!isMatch) {
+            return res.status(400).json({ success: false, message: "Current password is incorrect" });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+
+        await pool.query(
+            "UPDATE users SET password = $1 WHERE custom_id = $2",
+            [hashedPassword, customId]
+        );
+
+        return res.json({ success: true, message: "Password updated successfully." });
+    } catch (error) {
+        console.error("[Auth Error] changePassword:", error.message);
+        return res.status(500).json({ success: false, message: "Password update failed." });
+    }
+};
+
+exports.deleteAccount = async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const customId = req.user?.custom_id;
+
+        if (!customId) {
+            return res.status(401).json({ success: false, message: "Unauthorized." });
+        }
+
+        await client.query("BEGIN");
+
+        // Remove user-owned products safely (detach report.product_id to avoid FK conflicts)
+        await client.query(
+            "DELETE FROM interests WHERE product_id IN (SELECT id FROM products WHERE user_id = $1)",
+            [customId]
+        );
+        await client.query(
+            "UPDATE reports SET product_id = NULL WHERE product_id IN (SELECT id FROM products WHERE user_id = $1)",
+            [customId]
+        );
+        await client.query(
+            "DELETE FROM products WHERE user_id = $1",
+            [customId]
+        );
+
+        // Remove interests/reports created by this user on others' products
+        await client.query(
+            "DELETE FROM interests WHERE buyer_id = $1 OR seller_id = $1",
+            [customId]
+        );
+        await client.query(
+            "DELETE FROM reports WHERE reported_by = $1",
+            [customId]
+        );
+
+        // Remove profile row (if any)
+        await client.query(
+            "DELETE FROM user_profiles WHERE user_id = $1",
+            [customId]
+        );
+
+        const deleteUserResult = await client.query(
+            "DELETE FROM users WHERE custom_id = $1 RETURNING custom_id",
+            [customId]
+        );
+
+        await client.query("COMMIT");
+
+        if (deleteUserResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        return res.json({ success: true, message: "Account deleted successfully" });
+    } catch (error) {
+        await client.query("ROLLBACK");
+        console.error("[Auth Error] deleteAccount:", error.message);
+        return res.status(500).json({ success: false, message: "Account deletion failed." });
+    } finally {
+        client.release();
+    }
+};

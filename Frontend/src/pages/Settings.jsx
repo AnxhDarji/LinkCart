@@ -33,7 +33,7 @@ const cardSubtle =
 const readToken = () => localStorage.getItem('token') || '';
 
 const Settings = () => {
-    const { isLoggedIn, currentUser, profileLoading, refreshCurrentUser, updateCurrentUser } = useAppContext();
+    const { isLoggedIn, currentUser, profileLoading, refreshCurrentUser, updateCurrentUser, logout } = useAppContext();
     const toast = useToast();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -47,6 +47,7 @@ const Settings = () => {
 
     const [accountForm, setAccountForm] = useState({ fullName: '', email: '', phone: '' });
     const [profileForm, setProfileForm] = useState({ bio: '', city: '', state: '' });
+    const [securityForm, setSecurityForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [notifForm, setNotifForm] = useState({
         emailNotifications: true,
         interestAlerts: true,
@@ -55,11 +56,18 @@ const Settings = () => {
 
     const [accountSaving, setAccountSaving] = useState(false);
     const [profileSaving, setProfileSaving] = useState(false);
+    const [securitySaving, setSecuritySaving] = useState(false);
     const [uploadingPic, setUploadingPic] = useState(false);
 
     const [errors, setErrors] = useState({});
 
+    const [securityError, setSecurityError] = useState('');
+    const [securitySuccess, setSecuritySuccess] = useState('');
+
     const [deleteOpen, setDeleteOpen] = useState(false);
+    const [deleteStep, setDeleteStep] = useState(1);
+    const [deleteText, setDeleteText] = useState('');
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
     useEffect(() => {
         if (!isLoggedIn) return;
@@ -97,6 +105,18 @@ const Settings = () => {
         localStorage.setItem('settings.notifications', JSON.stringify(notifForm));
     }, [notifForm]);
 
+    useEffect(() => {
+        setErrors({});
+        setSecurityError('');
+        setSecuritySuccess('');
+        if (activeTab !== 'account') {
+            setDeleteOpen(false);
+            setDeleteStep(1);
+            setDeleteText('');
+            setDeleteLoading(false);
+        }
+    }, [activeTab]);
+
     const validateAccount = () => {
         const nextErrors = {};
         if (!accountForm.fullName.trim()) nextErrors.fullName = 'Full name is required.';
@@ -113,6 +133,21 @@ const Settings = () => {
     const validateProfile = () => {
         const nextErrors = {};
         if (String(profileForm.bio || '').length > 50) nextErrors.bio = 'Bio must be 50 characters or fewer.';
+        setErrors((prev) => ({ ...prev, ...nextErrors }));
+        return Object.keys(nextErrors).length === 0;
+    };
+
+    const validateSecurity = () => {
+        const nextErrors = {};
+
+        if (!securityForm.currentPassword) nextErrors.currentPassword = 'Current password is required.';
+        if (!securityForm.newPassword) nextErrors.newPassword = 'New password is required.';
+        if (securityForm.newPassword && securityForm.newPassword.length < 8) nextErrors.newPassword = 'Minimum 8 characters.';
+        if (!securityForm.confirmPassword) nextErrors.confirmPassword = 'Please confirm your new password.';
+        if (securityForm.newPassword && securityForm.confirmPassword && securityForm.newPassword !== securityForm.confirmPassword) {
+            nextErrors.confirmPassword = 'Passwords do not match.';
+        }
+
         setErrors((prev) => ({ ...prev, ...nextErrors }));
         return Object.keys(nextErrors).length === 0;
     };
@@ -255,6 +290,94 @@ const Settings = () => {
         }
     };
 
+    const handleChangePassword = async () => {
+        setErrors({});
+        setSecurityError('');
+        setSecuritySuccess('');
+
+        if (!validateSecurity()) return;
+
+        const token = readToken();
+        if (!token) {
+            toast.error('Please sign in to update settings.');
+            navigate('/login');
+            return;
+        }
+
+        setSecuritySaving(true);
+        try {
+            const res = await authFetch(`${API_BASE}/api/auth/change-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    currentPassword: securityForm.currentPassword,
+                    newPassword: securityForm.newPassword,
+                }),
+            });
+            const data = await res.json();
+
+            if (!res.ok || data?.success === false) {
+                const msg = data?.message || 'Failed to change password.';
+                setSecurityError(msg);
+                toast.error(msg);
+                return;
+            }
+
+            const msg = data?.message || 'Password updated successfully.';
+            setSecuritySuccess(msg);
+            toast.success(msg);
+            setSecurityForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        } catch {
+            setSecurityError('Server error. Please try again later.');
+        } finally {
+            setSecuritySaving(false);
+        }
+    };
+
+    const openDeleteModal = () => {
+        setDeleteStep(1);
+        setDeleteText('');
+        setDeleteOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        setDeleteOpen(false);
+        setDeleteStep(1);
+        setDeleteText('');
+        setDeleteLoading(false);
+    };
+
+    const handleDeleteAccount = async () => {
+        const token = readToken();
+        if (!token) {
+            toast.error('Please sign in to continue.');
+            navigate('/login');
+            return;
+        }
+
+        setDeleteLoading(true);
+        try {
+            const res = await authFetch(`${API_BASE}/api/auth/delete-account`, {
+                method: 'DELETE',
+            });
+            const data = await res.json();
+
+            if (!res.ok || data?.success === false) {
+                toast.error(data?.message || 'Account deletion failed.');
+                return;
+            }
+
+            logout();
+            toast.success('Your account has been deleted');
+            navigate('/', { replace: true });
+        } catch {
+            toast.error('Server error. Please try again later.');
+        } finally {
+            setDeleteLoading(false);
+            closeDeleteModal();
+        }
+    };
+
     if (!isLoggedIn) {
         return (
             <>
@@ -287,55 +410,72 @@ const Settings = () => {
 
                     <div className="space-y-6">
                         {activeTab === 'account' ? (
-                            <SettingsForm
-                                title="Account"
-                                description="Update your basic account details."
-                                footer={
-                                    <div className="flex items-center justify-end">
-                                        <button type="button" className={primaryBtn} onClick={handleSaveAccount} disabled={accountSaving}>
-                                            {accountSaving ? 'Saving…' : 'Save Changes'}
+                            <>
+                                <SettingsForm
+                                    title="Account"
+                                    description="Update your basic account details."
+                                    footer={
+                                        <div className="flex items-center justify-end">
+                                            <button type="button" className={primaryBtn} onClick={handleSaveAccount} disabled={accountSaving}>
+                                                {accountSaving ? 'Saving…' : 'Save Changes'}
+                                            </button>
+                                        </div>
+                                    }
+                                >
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <SettingsInputField
+                                            label="Full Name"
+                                            name="fullName"
+                                            value={accountForm.fullName}
+                                            onChange={(e) => {
+                                                setAccountForm((p) => ({ ...p, fullName: e.target.value }));
+                                                if (errors.fullName) setErrors((p) => ({ ...p, fullName: '' }));
+                                            }}
+                                            placeholder="Your full name"
+                                            error={errors.fullName}
+                                            autoComplete="name"
+                                        />
+                                        <SettingsInputField
+                                            label="Email"
+                                            name="email"
+                                            type="email"
+                                            value={accountForm.email}
+                                            onChange={() => {}}
+                                            readOnly
+                                            helper="Email changes are currently not supported."
+                                            autoComplete="email"
+                                        />
+                                    </div>
+
+                                    <SettingsInputField
+                                        label="Phone"
+                                        name="phone"
+                                        value={accountForm.phone}
+                                        onChange={(e) => {
+                                            setAccountForm((p) => ({ ...p, phone: e.target.value }));
+                                            if (errors.phone) setErrors((p) => ({ ...p, phone: '' }));
+                                        }}
+                                        placeholder="10-digit mobile number"
+                                        error={errors.phone}
+                                        autoComplete="tel"
+                                    />
+                                </SettingsForm>
+
+                                {/* Danger Zone (Account tab only) */}
+                                <div className="bg-white/80 backdrop-blur-xl border border-red-100 rounded-2xl p-6 md:p-8 shadow-[0_8px_40px_rgba(239,68,68,0.08)]">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-slate-800">Danger Zone</h3>
+                                            <p className="mt-1 text-sm text-slate-500">
+                                                Deleting your account is permanent. Your data will be removed.
+                                            </p>
+                                        </div>
+                                        <button type="button" className={dangerBtn} onClick={openDeleteModal}>
+                                            <Trash2 size={16} />Delete Account
                                         </button>
                                     </div>
-                                }
-                            >
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <SettingsInputField
-                                        label="Full Name"
-                                        name="fullName"
-                                        value={accountForm.fullName}
-                                        onChange={(e) => {
-                                            setAccountForm((p) => ({ ...p, fullName: e.target.value }));
-                                            if (errors.fullName) setErrors((p) => ({ ...p, fullName: '' }));
-                                        }}
-                                        placeholder="Your full name"
-                                        error={errors.fullName}
-                                        autoComplete="name"
-                                    />
-                                    <SettingsInputField
-                                        label="Email"
-                                        name="email"
-                                        type="email"
-                                        value={accountForm.email}
-                                        onChange={() => {}}
-                                        readOnly
-                                        helper="Email changes are currently not supported."
-                                        autoComplete="email"
-                                    />
                                 </div>
-
-                                <SettingsInputField
-                                    label="Phone"
-                                    name="phone"
-                                    value={accountForm.phone}
-                                    onChange={(e) => {
-                                        setAccountForm((p) => ({ ...p, phone: e.target.value }));
-                                        if (errors.phone) setErrors((p) => ({ ...p, phone: '' }));
-                                    }}
-                                    placeholder="10-digit mobile number"
-                                    error={errors.phone}
-                                    autoComplete="tel"
-                                />
-                            </SettingsForm>
+                            </>
                         ) : null}
 
                         {activeTab === 'profile' ? (
@@ -423,43 +563,67 @@ const Settings = () => {
                                         <button
                                             type="button"
                                             className={primaryBtn}
-                                            onClick={() => toast.info('Password change is not available yet. Use Forgot Password.')}
+                                            onClick={handleChangePassword}
+                                            disabled={securitySaving}
                                         >
-                                            Save Changes
+                                            {securitySaving ? 'Saving…' : 'Save Changes'}
                                         </button>
                                     </div>
                                 }
                             >
+                                {securityError ? (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+                                        {securityError}
+                                    </div>
+                                ) : null}
+                                {securitySuccess ? (
+                                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl text-sm">
+                                        {securitySuccess}
+                                    </div>
+                                ) : null}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <SettingsInputField
                                         label="Current Password"
                                         name="currentPassword"
                                         type="password"
-                                        value=""
-                                        onChange={() => {}}
-                                        disabled
-                                        helper="Coming soon"
+                                        value={securityForm.currentPassword}
+                                        onChange={(e) => {
+                                            setSecurityForm((p) => ({ ...p, currentPassword: e.target.value }));
+                                            if (errors.currentPassword) setErrors((p) => ({ ...p, currentPassword: '' }));
+                                            if (securityError) setSecurityError('');
+                                            if (securitySuccess) setSecuritySuccess('');
+                                        }}
+                                        error={errors.currentPassword}
                                         autoComplete="current-password"
                                     />
-                                    <div />
                                     <SettingsInputField
                                         label="New Password"
                                         name="newPassword"
                                         type="password"
-                                        value=""
-                                        onChange={() => {}}
-                                        disabled
-                                        helper="Coming soon"
+                                        value={securityForm.newPassword}
+                                        onChange={(e) => {
+                                            setSecurityForm((p) => ({ ...p, newPassword: e.target.value }));
+                                            if (errors.newPassword) setErrors((p) => ({ ...p, newPassword: '' }));
+                                            if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: '' }));
+                                            if (securityError) setSecurityError('');
+                                            if (securitySuccess) setSecuritySuccess('');
+                                        }}
+                                        error={errors.newPassword}
+                                        helper="Minimum 8 characters."
                                         autoComplete="new-password"
                                     />
                                     <SettingsInputField
                                         label="Confirm Password"
                                         name="confirmPassword"
                                         type="password"
-                                        value=""
-                                        onChange={() => {}}
-                                        disabled
-                                        helper="Coming soon"
+                                        value={securityForm.confirmPassword}
+                                        onChange={(e) => {
+                                            setSecurityForm((p) => ({ ...p, confirmPassword: e.target.value }));
+                                            if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: '' }));
+                                            if (securityError) setSecurityError('');
+                                            if (securitySuccess) setSecuritySuccess('');
+                                        }}
+                                        error={errors.confirmPassword}
                                         autoComplete="new-password"
                                     />
                                 </div>
@@ -467,7 +631,7 @@ const Settings = () => {
                                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                                     <p className="text-sm font-semibold text-slate-800">Tip</p>
                                     <p className="mt-1 text-sm text-slate-600">
-                                        To change your password today, use the OTP-based reset flow.
+                                        Use a strong password with uppercase, lowercase, a number, and a special character.
                                     </p>
                                 </div>
                             </SettingsForm>
@@ -514,56 +678,77 @@ const Settings = () => {
                             </SettingsForm>
                         ) : null}
 
-                        {/* Danger Zone */}
-                        <div className="bg-white/80 backdrop-blur-xl border border-red-100 rounded-2xl p-6 md:p-8 shadow-[0_8px_40px_rgba(239,68,68,0.08)]">
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <h3 className="text-lg font-semibold text-slate-800">Danger Zone</h3>
-                                    <p className="mt-1 text-sm text-slate-500">
-                                        Deleting your account is irreversible. This is UI-only right now.
-                                    </p>
-                                </div>
-                                <button type="button" className={dangerBtn} onClick={() => setDeleteOpen(true)}>
-                                    <Trash2 size={16} />Delete Account
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
                 {/* Confirmation Modal */}
-                {deleteOpen ? (
+                {deleteOpen && activeTab === 'account' ? (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-                        <div
-                            className="absolute inset-0 bg-slate-900/40"
-                            onClick={() => setDeleteOpen(false)}
-                            aria-hidden="true"
-                        />
-                        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
-                            <h4 className="text-lg font-semibold text-slate-800">Delete account?</h4>
-                            <p className="mt-2 text-sm text-slate-600">
-                                Are you sure you want to delete your account? This action can’t be undone.
-                            </p>
+                        <div className="absolute inset-0 bg-slate-900/40" onClick={closeDeleteModal} aria-hidden="true" />
+                        <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 animate-fade-in">
+                            {deleteStep === 1 ? (
+                                <>
+                                    <h4 className="text-lg font-semibold text-slate-800">Delete account?</h4>
+                                    <p className="mt-2 text-sm text-slate-600">
+                                        Are you sure you want to delete your account? This action can’t be undone.
+                                    </p>
 
-                            <div className="mt-6 flex items-center justify-end gap-3">
-                                <button
-                                    type="button"
-                                    className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
-                                    onClick={() => setDeleteOpen(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    className={dangerBtn}
-                                    onClick={() => {
-                                        setDeleteOpen(false);
-                                        toast.warning('Account deletion is not available yet.');
-                                    }}
-                                >
-                                    Yes, delete
-                                </button>
-                            </div>
+                                    <div className="mt-6 flex items-center justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                                            onClick={closeDeleteModal}
+                                            disabled={deleteLoading}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={dangerBtn}
+                                            onClick={() => setDeleteStep(2)}
+                                            disabled={deleteLoading}
+                                        >
+                                            Continue
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <h4 className="text-lg font-semibold text-slate-800">Final confirmation</h4>
+                                    <p className="mt-2 text-sm text-slate-600">
+                                        This action is permanent. Type <span className="font-semibold text-slate-800">DELETE</span> to confirm.
+                                    </p>
+
+                                    <div className="mt-5">
+                                        <SettingsInputField
+                                            label="Confirmation"
+                                            name="deleteConfirm"
+                                            value={deleteText}
+                                            onChange={(e) => setDeleteText(e.target.value)}
+                                            placeholder="Type DELETE"
+                                        />
+                                    </div>
+
+                                    <div className="mt-6 flex items-center justify-end gap-3">
+                                        <button
+                                            type="button"
+                                            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                                            onClick={closeDeleteModal}
+                                            disabled={deleteLoading}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={dangerBtn}
+                                            onClick={handleDeleteAccount}
+                                            disabled={deleteLoading || deleteText.trim().toUpperCase() !== 'DELETE'}
+                                        >
+                                            {deleteLoading ? 'Deleting…' : 'Yes, delete'}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 ) : null}
@@ -575,4 +760,3 @@ const Settings = () => {
 };
 
 export default Settings;
-
