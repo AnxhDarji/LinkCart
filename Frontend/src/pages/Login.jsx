@@ -8,6 +8,7 @@ import { useAppContext } from '../context/AppContext';
 import { loginSchema } from '../utils/validationSchemas';
 import GoogleButton from '../components/GoogleButton';
 import API_BASE from '../utils/api';
+import IndianDoodleBg from '../components/auth/IndianDoodleBg';
 
 const fieldState = (touched, error, value) => {
     if (touched && error) return 'border-red-400 focus:ring-red-100 focus:border-red-400';
@@ -67,8 +68,9 @@ const Login = () => {
         <>
             <Navbar />
 
-            <div className="theme-page min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-14">
-                <div className="w-full max-w-md">
+            <div className="theme-page min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-14" style={{ position: 'relative' }}>
+                <IndianDoodleBg />
+                <div className="w-full max-w-md" style={{ position: 'relative', zIndex: 1 }}>
                     <div className="mb-8 text-center">
                         <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-3xl font-bold text-transparent">
                             LinkCart

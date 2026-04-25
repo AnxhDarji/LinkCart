@@ -8,6 +8,7 @@ import { signupSchema } from '../utils/validationSchemas';
 import GoogleButton from '../components/GoogleButton';
 import API_BASE from '../utils/api';
 import { useToast } from '../context/ToastContext';
+import IndianDoodleBg from '../components/auth/IndianDoodleBg';
 
 const fieldState = (touched, error, value) => {
     if (touched && error) return 'border-red-400 ring-red-100 focus:ring-red-200 focus:border-red-400';
@@ -140,13 +141,10 @@ const Signup = () => {
         <>
             <Navbar />
 
-            <div className="theme-page min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-14">
-                <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-                    <div style={{ width: 480, height: 480, top: '-120px', left: '-120px', background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)', position: 'absolute', borderRadius: '50%' }} />
-                    <div style={{ width: 400, height: 400, bottom: '-100px', right: '-80px', background: 'radial-gradient(circle, rgba(168,85,247,0.10) 0%, transparent 70%)', position: 'absolute', borderRadius: '50%' }} />
-                </div>
+            <div className="theme-page min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-14" style={{ position: 'relative' }}>
+                <IndianDoodleBg />
 
-                <div className="w-full max-w-md animate-fade-in">
+                <div className="w-full max-w-md animate-fade-in" style={{ position: 'relative', zIndex: 1 }}>
                     <div className="mb-8 text-center">
                         <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-3xl font-bold text-transparent" style={{ fontFamily: 'Clash Display, sans-serif' }}>
                             LinkCart
@@ -201,11 +199,10 @@ const Signup = () => {
                                         type="button"
                                         onClick={handleSendOtp}
                                         disabled={otpLoading || otpVerified}
-                                        className={`shrink-0 flex items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed ${
-                                            otpVerified
+                                        className={`shrink-0 flex items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed ${otpVerified
                                                 ? 'border border-emerald-200 bg-emerald-50 text-emerald-600'
                                                 : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:-translate-y-px hover:shadow-lg hover:shadow-indigo-200 active:translate-y-0 disabled:opacity-60'
-                                        }`}
+                                            }`}
                                     >
                                         {otpBtnLabel()}
                                     </button>
@@ -247,11 +244,10 @@ const Signup = () => {
                                                     setOtpValue(e.target.value.replace(/\D/g, ''));
                                                     setOtpError('');
                                                 }}
-                                                className={`theme-input w-full rounded-xl border px-4 py-3 text-center text-sm font-mono tracking-[0.4em] placeholder:text-slate-300 focus:outline-none focus:ring-4 transition-all duration-200 ${
-                                                    otpError
+                                                className={`theme-input w-full rounded-xl border px-4 py-3 text-center text-sm font-mono tracking-[0.4em] placeholder:text-slate-300 focus:outline-none focus:ring-4 transition-all duration-200 ${otpError
                                                         ? 'border-red-400 focus:ring-red-100 focus:border-red-400'
                                                         : 'border-slate-200 focus:ring-indigo-100 focus:border-indigo-400'
-                                                }`}
+                                                    }`}
                                             />
                                             <button
                                                 type="button"
