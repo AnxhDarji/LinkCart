@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import API_BASE from '../utils/api';
 import { useAppContext } from '../context/AppContext';
 import { getProfileCompletionDetails, isProfileComplete } from '../utils/profileCompletion';
+import { useToast } from '../context/ToastContext';
 
 const inputBase = 'theme-input w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 transition-all duration-200';
 
@@ -35,9 +36,9 @@ const PostAd = () => {
     const { currentUser, refreshCurrentUser } = useAppContext();
     const [formData, setFormData] = useState({ title: '', price: '', location: '', description: '', visibility: 'public' });
     const [image, setImage] = useState(null);
-    const [error, setError]       = useState('');
     const [profileError, setProfileError] = useState('');
     const [loading, setLoading]   = useState(false);
+    const toast = useToast();
     const [createdSlug, setCreatedSlug] = useState(null);
     const [copied, setCopied]     = useState(false);
     const profileDetails = useMemo(() => getProfileCompletionDetails(currentUser), [currentUser]);
@@ -61,10 +62,9 @@ const PostAd = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setProfileError('');
         if (!formData.title || !formData.price || !formData.location) {
-            setError('Title, price, and location are required.');
+            toast.warning('Title, price, and location are required.');
             return;
         }
         const token = localStorage.getItem('token');
@@ -95,7 +95,7 @@ const PostAd = () => {
             if (!res.ok) throw new Error(data.error || 'Failed to create product');
             setCreatedSlug(data.product.slug);
         } catch (err) {
-            setError(err.message);
+            toast.error(err.message);
         } finally {
             setLoading(false);
         }
@@ -175,13 +175,6 @@ const PostAd = () => {
 
                     <div className="theme-surface rounded-2xl p-8 backdrop-blur-xl">
 
-                        {error && (
-                            <div className="flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm mb-6 animate-fade-in">
-                                <span className="mt-0.5 shrink-0 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center text-[10px] font-bold">!</span>
-                                {error}
-                            </div>
-                        )}
-
                         {profileError && (
                             <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800 animate-fade-in">
                                 <p className="font-semibold">{profileError}</p>
@@ -204,7 +197,7 @@ const PostAd = () => {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
+                        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                             <div>
                                 <Label icon={Tag} required>Title</Label>
                                 <input type="text" name="title" className={inputBase} placeholder="Enter product title" value={formData.title} onChange={handleChange} required />

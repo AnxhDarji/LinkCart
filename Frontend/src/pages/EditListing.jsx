@@ -63,6 +63,10 @@ const EditListing = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!formData.title || !formData.price || !formData.location || !formData.description) {
+            toast.warning('Please fill out all required fields.');
+            return;
+        }
         const token = localStorage.getItem('token');
         setSaving(true);
         
@@ -109,7 +113,7 @@ const EditListing = () => {
                     <p className="theme-text-secondary mb-10 text-sm">Update your listing details below.</p>
 
                     <div className="theme-surface rounded-2xl p-8 backdrop-blur-xl">
-                        <form onSubmit={handleSubmit} className="space-y-5">
+                        <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                             <div>
                                 <Label icon={Tag}>Title</Label>
                                 <input type="text" name="title" className={inputBase} value={formData.title} onChange={handleChange} placeholder="Enter product title" required />

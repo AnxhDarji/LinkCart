@@ -5,6 +5,7 @@ const pool = require("../config/db");
 const generateCustomId = require("../utils/generateCustomID");
 const generateOTP = require("../utils/otp");
 const sendEmail = require("../utils/sendEmail");
+const { getUserProfileByCustomId } = require("../utils/userProfile");
 
 const BCRYPT_ROUNDS = 12;
 const OTP_EXPIRY_MS = 5 * 60 * 1000;
@@ -39,14 +40,11 @@ const generateToken = (user) =>
 const getRedirect = async (user) => {
     if (user.role === "admin") return "/admin";
 
-    const profileResult = await pool.query(
-        "SELECT profile_completed FROM user_profiles WHERE user_id = $1",
-        [user.custom_id]
-    );
+    const profile = await getUserProfileByCustomId(user.custom_id);
 
-    return (profileResult.rows.length === 0 || !profileResult.rows[0].profile_completed)
-        ? "/complete-profile"
-        : "/account";
+    return (!profile || !profile.profile_completed)
+        ? "/account"
+        : "/products";
 };
 
 exports.signup = async (req, res) => {

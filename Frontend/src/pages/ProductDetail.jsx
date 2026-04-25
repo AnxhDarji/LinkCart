@@ -61,6 +61,11 @@ const ProductDetail = () => {
     const handleReportSubmit = async (e) => {
         if (e) e.preventDefault();
 
+        if (!reportReason || !reportDescription.trim()) {
+            toast.warning('Please select a reason and provide a description.');
+            return;
+        }
+
         const token = localStorage.getItem('token');
         if (!token) {
             toast.warning('You must be logged in to submit a report.');
@@ -235,7 +240,7 @@ const ProductDetail = () => {
                             <h2 className="text-2xl font-bold" style={{ fontFamily: 'Clash Display, sans-serif' }}>Report Listing</h2>
                             <button onClick={() => setShowReportModal(false)}><X size={24} /></button>
                         </div>
-                        <form onSubmit={handleReportSubmit}>
+                        <form onSubmit={handleReportSubmit} noValidate>
                             <div className="p-6 space-y-6">
                                 <div>
                                     <label className="block text-sm font-bold mb-3">Reason</label>

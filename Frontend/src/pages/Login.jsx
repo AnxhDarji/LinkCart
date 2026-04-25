@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
-import { Mail, Lock, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAppContext } from '../context/AppContext';
+import { useToast } from '../context/ToastContext';
 import { loginSchema } from '../utils/validationSchemas';
 import GoogleButton from '../components/GoogleButton';
 import API_BASE from '../utils/api';
@@ -20,9 +21,11 @@ const inputBase = 'theme-input w-full rounded-xl border py-3 pr-4 pl-10 text-sm 
 
 const Login = () => {
     const [serverError, setServerError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
     const { login } = useAppContext();
+    const toast = useToast();
     const successMessage = location.state?.successMessage || '';
 
     const formik = useFormik({
@@ -54,7 +57,10 @@ const Login = () => {
                 if (data.role === 'admin') {
                     navigate('/admin');
                 } else {
-                    navigate(data.redirectTo || '/');
+                    if (data.redirectTo === "/account") {
+                        toast.success('Fill up your profile first');
+                    }
+                    navigate(data.redirectTo || '/products');
                 }
             } catch {
                 setServerError('Server error. Please try again later.');
@@ -114,14 +120,22 @@ const Login = () => {
                                 <div className="relative">
                                     <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 theme-text-muted" />
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         name="password"
                                         placeholder="Password"
                                         value={formik.values.password}
                                         onChange={formik.handleChange}
                                         onBlur={formik.handleBlur}
+                                        style={{ paddingRight: '2.5rem' }}
                                         className={`${inputBase} ${fieldState(formik.touched.password, formik.errors.password, formik.values.password)}`}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 theme-text-muted hover:text-indigo-500 transition-colors focus:outline-none"
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
                                 </div>
                                 {formik.touched.password && formik.errors.password ? (
                                     <p className="mt-1 text-xs text-red-500">{formik.errors.password}</p>

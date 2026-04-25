@@ -142,6 +142,11 @@ const PublicProductPage = () => {
         if (e) e.preventDefault();
 
         if (!reportReason || !reportDescription.trim()) {
+            toast.warning('Please select a reason and provide a description.');
+            return;
+        }
+
+        if (!reportReason || !reportDescription.trim()) {
             return;
         }
 
@@ -377,7 +382,7 @@ const PublicProductPage = () => {
                             <h2 className="text-xl font-semibold text-gray-900">Report Listing</h2>
                             <button onClick={() => setShowReportModal(false)} className="text-gray-500 transition-colors hover:text-gray-700"><X size={20} /></button>
                         </div>
-                        <form onSubmit={handleReportSubmit}>
+                        <form onSubmit={handleReportSubmit} noValidate>
                             <div className="space-y-6 p-6">
                                 <div>
                                     <label className="mb-3 block text-sm font-semibold text-gray-700">Reason</label>

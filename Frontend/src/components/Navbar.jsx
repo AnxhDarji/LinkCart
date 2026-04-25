@@ -96,14 +96,8 @@ const Navbar = () => {
                                         <Link to="/settings" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 hover:text-indigo-600 transition-colors text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                                             <Settings size={15} />Settings
                                         </Link>
-                                        <Link to="/my-listings" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 hover:text-indigo-600 transition-colors text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                            <LayoutList size={15} />My Listings
-                                        </Link>
                                         <Link to="/dashboard/reports" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 hover:text-indigo-600 transition-colors text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                                             <Flag size={15} />My Reports
-                                        </Link>
-                                        <Link to="/post-ad" onClick={() => setIsDropdownOpen(false)} className="flex items-center gap-2.5 px-4 py-2.5 hover:text-indigo-600 transition-colors text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                            <Plus size={15} />Create Link
                                         </Link>
                                         <div className="border-t my-1" style={{ borderColor: 'var(--border-primary)' }}></div>
                                         <button onClick={handleLogout} className="flex items-center gap-2.5 w-full px-4 py-2.5 text-red-500 hover:bg-red-50 transition-colors text-sm font-medium">

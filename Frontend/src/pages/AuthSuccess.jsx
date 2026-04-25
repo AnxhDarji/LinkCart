@@ -2,16 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { useToast } from '../context/ToastContext';
 
 const AuthSuccess = () => {
     const [searchParams] = useSearchParams();
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const { login } = useAppContext();
+    const toast = useToast();
 
     useEffect(() => {
         const token = searchParams.get('token');
         const customId = searchParams.get('customId');
+        const redirectTo = searchParams.get('redirectTo');
         const authError = searchParams.get('error');
 
         if (authError || !token) {
@@ -24,7 +27,12 @@ const AuthSuccess = () => {
 
         login();
 
-        const t = setTimeout(() => navigate('/'), 800);
+        const t = setTimeout(() => {
+            if (redirectTo === "/account") {
+                toast.success('Fill up your profile first');
+            }
+            navigate(redirectTo || '/products');
+        }, 800);
         return () => clearTimeout(t);
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
