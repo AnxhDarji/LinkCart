@@ -1,7 +1,7 @@
+require("dotenv").config();
+
 const { validateEnv } = require("./src/config/env");
 validateEnv();
-
-require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
@@ -23,30 +23,42 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(helmet());
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://linkcart-web.netlify.app"
+];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(express.json());
 app.use(passport.initialize());
 
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 20,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { message: "Too many attempts. Please try again later." },
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many attempts. Please try again later." },
 });
 
 const otpLimiter = rateLimit({
-    windowMs: 10 * 60 * 1000,
-    max: 5,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { message: "Too many OTP requests. Please wait before trying again." },
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many OTP requests. Please wait before trying again." },
 });
 
 app.use("/api/auth/login", authLimiter);
@@ -70,30 +82,30 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.use((error, req, res, next) => {
-    if (res.headersSent) return next(error);
+  if (res.headersSent) return next(error);
 
-    console.error("Error:", error.message);
+  console.error("Error:", error.message);
 
-    if (error.name === "MulterError") {
-        return res.status(400).json({ message: error.message });
-    }
+  if (error.name === "MulterError") {
+    return res.status(400).json({ message: error.message });
+  }
 
-    if (error.message === "Only JPG, PNG, and WEBP images are allowed.") {
-        return res.status(400).json({ message: error.message });
-    }
+  if (error.message === "Only JPG, PNG, and WEBP images are allowed.") {
+    return res.status(400).json({ message: error.message });
+  }
 
-    return res.status(500).json({ message: error.message });
+  return res.status(500).json({ message: error.message });
 });
 
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
 
 process.on("uncaughtException", (error) => {
-    console.error("Uncaught Exception:", error.message);
+  console.error("Uncaught Exception:", error.message);
 });
 
 process.on("unhandledRejection", (reason) => {
-    const message = reason instanceof Error ? reason.message : String(reason);
-    console.error("Unhandled Rejection:", message);
+  const message = reason instanceof Error ? reason.message : String(reason);
+  console.error("Unhandled Rejection:", message);
 });
