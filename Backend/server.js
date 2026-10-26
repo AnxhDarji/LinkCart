@@ -107,3 +107,5 @@ process.on("unhandledRejection", (reason) => {
   const message = reason instanceof Error ? reason.message : String(reason);
   console.error("Unhandled Rejection:", message);
 });
+
+console.log("Node.js version:", process.version);
